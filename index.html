@@ -338,7 +338,7 @@
                         <i class="fas fa-file-alt text-green-600 mr-2"></i>
                         생성된 잔금 정산 확인서
                     </h2>
-                    <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300">
+                    <button onclick="printDocument()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300">
                         <i class="fas fa-print mr-2"></i>
                         PDF 저장
                     </button>
@@ -607,6 +607,31 @@
             if (detailsDiv) {
                 detailsDiv.classList.toggle('hidden');
             }
+        }
+        
+        function printDocument() {
+            const roomName = document.getElementById('documentTitle').value || '정산서';
+            const settlementDate = document.getElementById('settlementDate').value;
+            
+            // 파일명 생성 (띄어쓰기 제거 및 특수문자 처리)
+            let fileName = roomName.replace(/\s+/g, '').replace(/[^a-zA-Z0-9가-힣_-]/g, '');
+            if (settlementDate) {
+                const dateStr = settlementDate.replace(/-/g, '');
+                fileName += '_' + dateStr;
+            }
+            fileName += '_잔금정산서';
+            
+            // 브라우저 제목을 파일명으로 임시 변경
+            const originalTitle = document.title;
+            document.title = fileName;
+            
+            // 인쇄 실행
+            window.print();
+            
+            // 제목 복원 (인쇄 후)
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
         }
         
         // 모든 입력 필드에서 데이터를 수집하여 localStorage에 저장
