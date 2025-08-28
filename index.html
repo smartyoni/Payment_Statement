@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>잔금 정산 확인서 작성 도우미 ✍️</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap'); /* 제목용 폰트 */
+        :root {
+            /* CSS 변수 기본값 설정 */
+            --accent-color: #2563EB; /* 기본 파란색 */
+            --accent-color-light: #BFDBFE;
+            --accent-color-start: #3B82F6;
+            --accent-color-end: #2563EB;
+            --header-bg-image: none; /* 기본 이미지 없음 */
+            --header-bg-position: center center;
+            --header-bg-size: 40% auto;
+            --header-bg-opacity: 0.15;
+            --header-mix-blend-mode: soft-light;
+        }
+        * {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .material-section {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background-color: #ffffff; /* 섹션 배경색 */
+            border-radius: 0.75rem; /* 둥근 모서리 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 은은한 그림자 */
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .section-divider {
+            border-top: 2px solid #e5e7eb;
+            margin: 3rem 0; /* 간격 확대 */
+        }
+        .gradient-header-bg {
+            /* 양식명에 따른 테마 색상 그라디언트 (기본: blue) */
+            background: linear-gradient(135deg, var(--accent-color-start) 0%, var(--accent-color-end) 100%);
+            padding: 2.5rem; /* 패딩 증가 */
+            border-radius: 1rem; /* 더 둥근 모서리 */
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* 텍스트 그림자 */
+            position: relative; /* ::before 가상 요소의 기준점 */
+            overflow: hidden; /* 배경 이미지가 박스 밖으로 나가지 않도록 */
+            /* 인쇄 시에도 색상 유지를 위해 */
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        /* 헤더 배경 이미지 기본 스타일 (가상 요소) */
+        .gradient-header-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: var(--header-bg-image); /* JS에서 설정된 이미지 */
+            background-repeat: no-repeat;
+            background-position: var(--header-bg-position); /* JS에서 설정된 위치 */
+            background-size: var(--header-bg-size); /* JS에서 설정된 크기 */
+            opacity: var(--header-bg-opacity); /* JS에서 설정된 투명도 */
+            z-index: 1; /* 그라디언트 위에 오도록 */
+            mix-blend-mode: var(--header-mix-blend-mode); /* JS에서 설정된 블렌딩 모드 */
+            /* 인쇄 시에도 색상 유지를 위해 */
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .gradient-header-bg h1, .gradient-header-bg p {
+            position: relative; /* 텍스트가 이미지 위에 오도록 */
+            z-index: 2;
+        }
+        .accent-border {
+            border-left: 5px solid var(--accent-color, #2563EB); /* 테마 색상 경계선 */
+            padding-left: 1rem;
+        }
+        /* H2 및 H3에 동일하게 적용될 섹션 제목 스타일 */
+        .section-heading, .document-output h2, .document-output h3 {
+            font-family: 'Playfair Display', serif !important; /* Playfair Display 폰트 강제 적용 */
+            font-weight: 700 !important; /* 굵게 강제 적용 */
+            color: #1F2937 !important; /* 진한 회색 강제 적용 */
+            display: flex; /* 아이콘과 텍스트 정렬 */
+            align-items: center;
+        }
+        .section-heading { /* input form의 h3과 output h2에 적용 */
+            border-bottom: 3px solid var(--accent-color-light); /* 테마 색상으로 밑줄 */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-heading i {
+            margin-right: 0.75rem;
+            color: var(--accent-color);
+            -webkit-print-color-adjust: exact; /* 인쇄 시 색상 유지 */
+            print-color-adjust: exact;
+        }
+        /* PDF 생성 기능 관련 CSS */
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body {
+                -webkit-print-color-adjust: exact; /* Chrome, Safari */
+                print-color-adjust: exact; /* 표준 */
+                font-size: 11pt; /* 인쇄 시 글꼴 크기 약간 축소 */
+                line-height: 1.6;
+                color: #333333;
+                background-color: transparent !important; /* 배경색 투명하게 */
+            }
+            .container {
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+            .shadow-lg {
+                box-shadow: none !important; /* 전체 그림자 제거 */
+            }
+            .document-output { /* 보도자료는 Times New Roman 유지 */
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                font-family: 'Times New Roman', serif !important; /* 인쇄 시 문서 전체 폰트 */
+            }
+            /* material-section의 외곽선과 그림자를 인쇄 시에도 유지 */
+            .material-section {
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important; /* 인쇄 시에도 연한 그림자 유지 */
+                border: 1px solid #e5e7eb !important; /* 인쇄 시에도 외곽선 유지 */
+                padding: 1.5rem !important; /* 패딩 유지 */
+                margin-bottom: 1.5rem !important; /* 마진 유지 */
+                background-color: #ffffff !important; /* 배경색 유지 */
+                border-radius: 0.5rem !important; /* 둥근 모서리 유지 */
+                -webkit-print-color-adjust: exact !important; /* 중요: 배경색 유지 */
+                print-color-adjust: exact !important; /* 중요: 배경색 유지 */
+            }
+            /* h2, h3 제목의 폰트와 굵기 유지 */
+            .document-output h2, .document-output h3 {
+                font-family: 'Playfair Display', serif !important;
+                font-weight: 700 !important;
+                color: #1F2937 !important;
+            }
+            .section-heading { /* 인쇄 시 밑줄 및 마진 재조정 */
+                border-bottom: 1px solid #ddd !important; /* 인쇄 시 밑줄 얇게 */
+                padding-bottom: 0.25rem !important;
+                margin-bottom: 1rem !important;
+            }
+            /* 그라디언트 헤더 및 색상 요소의 색상 유지 */
+            .gradient-header-bg {
+                /* 변수 값을 직접 사용하며 !important 강제 */
+                background: linear-gradient(135deg, var(--accent-color-start) 0%, var(--accent-color-end) 100%) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color: white !important;
+                padding: 1rem !important;
+                border-radius: 0.5rem !important;
+                text-shadow: none !important;
+                border: none !important;
+            }
+            .gradient-header-bg::before { /* 인쇄 시 배경 이미지도 유지 */
+                background-image: var(--header-bg-image) !important; /* 동적으로 설정된 이미지 유지 */
+                background-position: var(--header-bg-position) !important; /* 동적으로 설정된 위치 유지 */
+                background-size: var(--header-bg-size) !important; /* 동적으로 설정된 크기 유지 */
+                opacity: 0.05 !important; /* 인쇄 시 더 희미하게 */
+                mix-blend-mode: normal !important; /* 인쇄 시 블렌딩 모드 제거하여 호환성 개선 */
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .accent-border {
+                border-left-color: var(--accent-color) !important;
+                background-color: #F0F8FF !important; /* 인쇄 시에도 배경색 유지 */
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+        .print-only { display: none; } /* 기본적으로 숨김 */
+        @page {
+            size: A4;
+            margin: 1in;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="text-center mb-8 no-print">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-file-alt text-blue-600 mr-3"></i> 잔금 정산 확인서 작성 도우미
+            </h1>
+            <p class="text-gray-600 text-lg">몇 가지 정보만 입력하면 전문적인 잔금 정산 확인서가 완성됩니다</p>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <div class="xl:col-span-5 bg-white rounded-lg shadow-lg p-6 no-print">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-edit text-blue-500 mr-2"></i>
+                    정보 입력
+                </h2>
+                <form id="documentForm" class="space-y-6">
+                    <div class="border-b border-gray-200 pb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 section-heading">
+                            <i class="fas fa-info-circle"></i> 기본 정보
+                        </h3>
+                        
+                        <div class="input-group flex items-center mb-4">
+                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="settlementDate">잔금일</label>
+                            <input type="date" id="settlementDate" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="input-group flex items-center mb-4">
+                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="documentTitle">호실명*</label>
+                            <input type="text" id="documentTitle" required class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 101호, A동 201호">
+                        </div>
+                        <div class="input-group flex items-center mb-4">
+                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="documentVersion">퇴실점검일정</label>
+                            <input type="text" id="documentVersion" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 2024년 12월 30일 14:00">
+                        </div>
+                        <div class="input-group flex items-center mb-4">
+                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="releaseDate">입주점검일정</label>
+                            <input type="text" id="releaseDate" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 2024년 12월 31일 10:00">
+                        </div>
+                        <div class="input-group flex items-center mb-4">
+                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="depositAccount">보증금반환계좌</label>
+                            <input type="text" id="depositAccount" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: KB국민은행 123456-01-789012 (예금주: 이영희)">
+                        </div>
+                        <div class="input-group flex items-center mb-4">
+                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="managementFeeAccount">관리비승계계좌</label>
+                            <input type="text" id="managementFeeAccount" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 우리은행 111-222222-33-444 (예금주: XYZ관리사무소)">
+                        </div>
+                        <div class="input-group flex items-center mb-4">
+                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="managementRequestDate">관리비정산요청일</label>
+                            <input type="date" id="managementRequestDate" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="border-b border-gray-200 pb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 section-heading">
+                            <i class="fas fa-calculator"></i> 정산 내역
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="depositReturn">보증금 반환금</label>
+                                <input type="number" id="depositReturn" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 50000000">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="longTermRepair">장기수선충당금</label>
+                                <input type="number" id="longTermRepair" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 150000">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="monthlyRent">월세</label>
+                                <input type="number" id="monthlyRent" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 600000">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="rentDays">일수 (자동계산)</label>
+                                <input type="number" id="rentDays" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100" placeholder="자동계산됨" readonly>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="contractEndDate">만기일</label>
+                                <input type="date" id="contractEndDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="moveOutDate">퇴실일</label>
+                                <input type="date" id="moveOutDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div class="flex items-center">
+                                <input type="radio" id="overpaid" name="rentType" value="overpaid" class="mr-2">
+                                <label for="overpaid" class="text-sm font-medium text-gray-700">과납 (반환 +)</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="radio" id="unpaid" name="rentType" value="unpaid" class="mr-2">
+                                <label for="unpaid" class="text-sm font-medium text-gray-700">미납 (반환 -)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-b border-gray-200 pb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 section-heading">
+                            <i class="fas fa-calculator"></i> 관리비/공과금 정산
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="managementFee">관리비</label>
+                                <input type="number" id="managementFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 150000">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" for="utilityFee">공과금</label>
+                                <input type="number" id="utilityFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 85000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 section-heading">
+                            <i class="fas fa-check-circle"></i> 잔금일 체크리스트
+                        </h3>
+                        <div class="space-y-2">
+                            <div class="flex items-start">
+                                <input type="checkbox" id="check1" class="mt-1 mr-2 accent-color-checkbox">
+                                <label for="check1" class="text-gray-700">1. 은행대출금 및 남은 잔금, 월세 입금 확인</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" id="check2" class="mt-1 mr-2 accent-color-checkbox">
+                                <label for="check2" class="text-gray-700">2. 퇴실 세입자 관리비 납부 확인</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" id="check3" class="mt-1 mr-2 accent-color-checkbox">
+                                <label for="check3" class="text-gray-700">3. 퇴실 세입자 인터넷, 도시가스 등 공과금 납부 확인</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" id="check4" class="mt-1 mr-2 accent-color-checkbox">
+                                <label for="check4" class="text-gray-700">4. 관리비 승계 여부 확인</label>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" id="check5" class="mt-1 mr-2 accent-color-checkbox">
+                                <label for="check5" class="text-gray-700">5. 보증금 반환 후 공동현관/호실 비밀번호 확인</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col space-y-3">
+                        <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition duration-300 font-semibold">
+                            <i class="fas fa-magic mr-2"></i>
+                            잔금 정산 확인서 생성하기
+                        </button>
+                        <button type="button" id="clearFormButton" class="w-full bg-gray-300 text-gray-800 py-3 px-6 rounded-md hover:bg-gray-400 transition duration-300 font-semibold">
+                            <i class="fas fa-trash-alt mr-2"></i>
+                            양식 초기화
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="xl:col-span-4 bg-white rounded-lg shadow-lg p-8">
+                <div class="flex items-center justify-between mb-6 no-print">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-file-alt text-green-600 mr-2"></i>
+                        생성된 잔금 정산 확인서
+                    </h2>
+                    <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300">
+                        <i class="fas fa-print mr-2"></i>
+                        PDF 저장
+                    </button>
+                </div>
+                <div id="documentPreview" class="document-output">
+                    <div class="text-center text-gray-500 py-12">
+                        <i class="fas fa-clipboard-list text-6xl mb-4"></i>
+                        <p class="text-lg">좌측 양식을 작성하고 "잔금 정산 확인서 생성하기" 버튼을 클릭하세요</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="xl:col-span-3 bg-white rounded-lg shadow-lg p-6 no-print">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-list text-blue-500 mr-2"></i>
+                    저장된 정산서 목록
+                </h2>
+                <div id="settlementList" class="space-y-3">
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-inbox text-4xl mb-4"></i>
+                        <p>저장된 정산서가 없습니다.</p>
+                        <p class="text-sm">잔금 정산 확인서를 생성하면 자동으로 저장됩니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const formId = 'documentForm'; // 폼 ID
+        const localStorageKeyPrefix = 'form_generator_'; // localStorage 키 접두사
+        const settlementListKey = 'settlement_documents_list'; // 정산서 목록 키
+        let currentSettlementId = null; // 현재 편집 중인 정산서 ID
+        
+        // 정산서 목록 관리 함수들
+        function getSettlementList() {
+            const stored = localStorage.getItem(settlementListKey);
+            return stored ? JSON.parse(stored) : [];
+        }
+        
+        function saveSettlementList(list) {
+            localStorage.setItem(settlementListKey, JSON.stringify(list));
+        }
+        
+        function generateSettlementId() {
+            return 'settlement_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function saveCurrentSettlement() {
+            const formData = {};
+            const formElements = document.querySelectorAll(`#${formId} input, #${formId} textarea, #${formId} select`);
+            formElements.forEach(element => {
+                if (element.id) {
+                    if (element.type === 'checkbox' || element.type === 'radio') {
+                        formData[element.id] = element.checked;
+                    } else {
+                        formData[element.id] = element.value;
+                    }
+                }
+            });
+            
+            const roomName = document.getElementById('documentTitle').value || '미지정';
+            const settlementDate = document.getElementById('settlementDate').value;
+            const createdAt = new Date().toISOString();
+            
+            const settlementData = {
+                id: currentSettlementId || generateSettlementId(),
+                roomName: roomName,
+                settlementDate: settlementDate,
+                createdAt: currentSettlementId ? undefined : createdAt, // 기존 문서면 생성일 유지
+                updatedAt: createdAt,
+                formData: formData
+            };
+            
+            let list = getSettlementList();
+            const existingIndex = list.findIndex(item => item.id === settlementData.id);
+            
+            if (existingIndex >= 0) {
+                // 업데이트
+                settlementData.createdAt = list[existingIndex].createdAt; // 기존 생성일 유지
+                list[existingIndex] = settlementData;
+            } else {
+                // 새로 추가
+                settlementData.createdAt = createdAt;
+                list.push(settlementData);
+            }
+            
+            saveSettlementList(list);
+            currentSettlementId = settlementData.id;
+            updateSettlementListUI();
+            
+            return settlementData.id;
+        }
+        
+        function loadSettlement(id) {
+            const list = getSettlementList();
+            const settlement = list.find(item => item.id === id);
+            
+            if (settlement) {
+                currentSettlementId = id;
+                const formData = settlement.formData;
+                
+                // 폼에 데이터 로드
+                for (const elementId in formData) {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        if (element.type === 'checkbox' || element.type === 'radio') {
+                            element.checked = formData[elementId];
+                        } else {
+                            element.value = formData[elementId];
+                        }
+                    }
+                }
+                
+                generateDocument();
+            }
+        }
+        
+        function deleteSettlement(id) {
+            if (confirm('정말로 이 정산서를 삭제하시겠습니까?')) {
+                let list = getSettlementList();
+                list = list.filter(item => item.id !== id);
+                saveSettlementList(list);
+                
+                if (currentSettlementId === id) {
+                    currentSettlementId = null;
+                }
+                
+                updateSettlementListUI();
+            }
+        }
+        
+        function updateSettlementListUI() {
+            const list = getSettlementList();
+            const listDiv = document.getElementById('settlementList');
+            
+            if (list.length === 0) {
+                listDiv.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-inbox text-4xl mb-4"></i>
+                        <p>저장된 정산서가 없습니다.</p>
+                        <p class="text-sm">잔금 정산 확인서를 생성하면 자동으로 저장됩니다.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 날짜순 정렬 (최신순)
+            list.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            
+            listDiv.innerHTML = list.map(settlement => {
+                const isCurrentlyEditing = currentSettlementId === settlement.id;
+                const updatedDate = new Date(settlement.updatedAt).toLocaleDateString('ko-KR');
+                const settlementDisplayDate = settlement.settlementDate ? 
+                    new Date(settlement.settlementDate).toLocaleDateString('ko-KR') : '미정';
+                
+                // 상세 정보 추출
+                const formData = settlement.formData || {};
+                const depositReturn = parseInt(formData.depositReturn || 0);
+                const longTermRepair = parseInt(formData.longTermRepair || 0);
+                const monthlyRent = parseInt(formData.monthlyRent || 0);
+                const rentDays = parseInt(formData.rentDays || 0);
+                const managementFee = parseInt(formData.managementFee || 0);
+                const utilityFee = parseInt(formData.utilityFee || 0);
+                
+                // 월세 일할계산
+                const dailyRentCalculation = Math.round((monthlyRent * rentDays * 12) / 365);
+                const isOverpaid = formData.overpaid;
+                const isUnpaid = formData.unpaid;
+                
+                // 반환금합계
+                let totalRefund = depositReturn + longTermRepair;
+                if (isOverpaid) totalRefund += dailyRentCalculation;
+                else if (isUnpaid) totalRefund -= dailyRentCalculation;
+                
+                // 숫자 포맷팅 함수
+                const formatKRW = (num) => `${num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}원`;
+                
+                return `
+                    <div class="border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors ${isCurrentlyEditing ? 'bg-blue-50 border-blue-300' : ''} mb-3">
+                        <div class="p-3 cursor-pointer" onclick="toggleSettlementDetails('${settlement.id}')">
+                            <div class="flex flex-col">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-semibold text-gray-800 flex items-center text-sm">
+                                        ${isCurrentlyEditing ? '<i class="fas fa-edit text-blue-500 mr-2"></i>' : '<i class="fas fa-file-alt text-gray-500 mr-2"></i>'}
+                                        ${settlement.roomName}
+                                    </h3>
+                                    ${isCurrentlyEditing ? '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">편집중</span>' : ''}
+                                </div>
+                                <div class="text-xs text-gray-600 mb-2">
+                                    <div>잔금일: ${settlementDisplayDate}</div>
+                                    <div>반환금: ${formatKRW(totalRefund)}</div>
+                                    <div>수정: ${updatedDate}</div>
+                                </div>
+                                <div class="flex flex-col space-y-1" onclick="event.stopPropagation()">
+                                    <button onclick="toggleSettlementDetails('${settlement.id}')" class="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600 transition-colors w-full">
+                                        <i class="fas fa-eye mr-1"></i>상세보기
+                                    </button>
+                                    ${!isCurrentlyEditing ? `
+                                        <button onclick="loadSettlement('${settlement.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors w-full">
+                                            <i class="fas fa-edit mr-1"></i>불러오기
+                                        </button>
+                                    ` : `
+                                        <div class="text-blue-600 text-xs font-medium text-center py-1">현재 편집중</div>
+                                    `}
+                                    <button onclick="deleteSettlement('${settlement.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 transition-colors w-full">
+                                        <i class="fas fa-trash mr-1"></i>삭제
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="details-${settlement.id}" class="hidden border-t border-gray-200 p-3 bg-gray-50">
+                            <div class="space-y-3 text-xs">
+                                <div class="space-y-1">
+                                    <h4 class="font-semibold text-gray-800 text-sm">정산 내역</h4>
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between">
+                                            <span>보증금:</span>
+                                            <span>${formatKRW(depositReturn)}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>장기수선:</span>
+                                            <span>${formatKRW(longTermRepair)}</span>
+                                        </div>
+                                        ${(isOverpaid || isUnpaid) ? `
+                                            <div class="flex justify-between">
+                                                <span>월세 ${isOverpaid ? '(과납)' : '(미납)'}:</span>
+                                                <span class="${isUnpaid ? 'text-red-500' : ''}">${isUnpaid ? '- ' : ''}${formatKRW(dailyRentCalculation)}</span>
+                                            </div>
+                                        ` : ''}
+                                        <div class="flex justify-between font-semibold border-t pt-1">
+                                            <span>합계:</span>
+                                            <span>${formatKRW(totalRefund)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-1">
+                                    <h4 class="font-semibold text-gray-800 text-sm">관리비/공과금</h4>
+                                    <div class="flex justify-between">
+                                        <span>관리비:</span>
+                                        <span>${formatKRW(managementFee)}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>공과금:</span>
+                                        <span>${formatKRW(utilityFee)}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-1">
+                                    <h4 class="font-semibold text-gray-800 text-sm">계좌 정보</h4>
+                                    <div class="text-xs text-gray-600">
+                                        <div><strong>보증금:</strong> ${formData.depositAccount ? formData.depositAccount.substring(0, 20) + '...' : '미입력'}</div>
+                                        <div><strong>관리비:</strong> ${formData.managementFeeAccount ? formData.managementFeeAccount.substring(0, 20) + '...' : '미입력'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function toggleSettlementDetails(id) {
+            const detailsDiv = document.getElementById(`details-${id}`);
+            if (detailsDiv) {
+                detailsDiv.classList.toggle('hidden');
+            }
+        }
+        
+        // 모든 입력 필드에서 데이터를 수집하여 localStorage에 저장
+        function saveFormDataToLocalStorage() {
+            const formData = {};
+            const formElements = document.querySelectorAll(`#${formId} input, #${formId} textarea, #${formId} select`);
+            formElements.forEach(element => {
+                if (element.id) { // ID가 있는 요소만 저장
+                    if (element.type === 'checkbox') {
+                        formData[element.id] = element.checked;
+                    } else {
+                        formData[element.id] = element.value;
+                    }
+                }
+            });
+            localStorage.setItem(localStorageKeyPrefix + formId, JSON.stringify(formData));
+            // console.log('Form data saved to localStorage');
+        }
+        // localStorage에서 데이터를 불러와 입력 필드에 채움
+        function loadFormDataFromLocalStorage() {
+            const savedData = localStorage.getItem(localStorageKeyPrefix + formId);
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                for (const id in formData) {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = formData[id];
+                        } else {
+                            element.value = formData[id];
+                        }
+                    }
+                }
+                // console.log('Form data loaded from localStorage');
+                // 데이터 로드 후 바로 미리보기 생성
+                generateDocument();
+            } else {
+                generateDocument();
+            }
+        }
+        // 입력 필드 초기화 (로컬스토리지 포함)
+        function clearForm() {
+            const formElements = document.querySelectorAll(`#${formId} input, #${formId} textarea, #${formId} select`);
+            formElements.forEach(element => {
+                if (element.type === 'checkbox') {
+                    element.checked = false;
+                } else if (element.tagName === 'SELECT') {
+                    element.value = ''; // select 박스는 첫 번째 옵션 또는 빈 값으로
+                } else {
+                    element.value = ''; // 텍스트, textarea 등은 빈 문자열로
+                }
+            });
+            localStorage.removeItem(localStorageKeyPrefix + formId); // localStorage에서도 삭제
+            generateDocument(); // 초기화 후 미리보기 업데이트
+            // console.log('Form data cleared');
+        }
+        // 현재 양식 데이터를 JSON 파일로 다운로드
+        function downloadDataFile() {
+            const formData = {};
+            const formElements = document.querySelectorAll(`#${formId} input, #${formId} textarea, #${formId} select`);
+            formElements.forEach(element => {
+                if (element.id) {
+                    if (element.type === 'checkbox') {
+                        formData[element.id] = element.checked;
+                    } else {
+                        formData[element.id] = element.value;
+                    }
+                }
+            });
+            const dataStr = JSON.stringify(formData, null, 2); // 보기 좋게 포맷팅
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            // 파일명에 현재 양식명과 날짜 포함
+            const formTitle = document.getElementById('documentTitle').value.replace(/[^a-zA-Z0-9가-힣_]/g, '_') || '새_양식';
+            a.download = `${formTitle}_데이터_${new Date().toISOString().slice(0,10)}.json`; 
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // URL 객체 해제
+        }
+        // JSON 파일을 읽어 양식에 불러오기
+        function uploadDataFile(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const loadedData = JSON.parse(e.target.result);
+                    for (const id in loadedData) {
+                        const element = document.getElementById(id);
+                        if (element) {
+                            if (element.type === 'checkbox') {
+                                element.checked = loadedData[id];
+                            } else {
+                                element.value = loadedData[id];
+                            }
+                        }
+                    }
+                    saveFormDataToLocalStorage(); // 불러온 데이터도 로컬 저장소에 저장
+                    generateDocument(); // 불러온 데이터로 미리보기 업데이트
+                    alert('데이터를 성공적으로 불러왔습니다!');
+                } catch (error) {
+                    alert('파일을 읽는 중 오류가 발생했거나 유효한 JSON 파일이 아닙니다: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            // 파일 선택 후 input 값 초기화 (동일 파일 재선택 가능하도록)
+            event.target.value = '';
+        }
+        
+        // 날짜 차이 계산 함수
+        function calculateDateDifference() {
+            const contractEndDate = document.getElementById('contractEndDate').value;
+            const moveOutDate = document.getElementById('moveOutDate').value;
+            
+            if (contractEndDate && moveOutDate) {
+                const endDate = new Date(contractEndDate);
+                const outDate = new Date(moveOutDate);
+                const timeDiff = Math.abs(outDate - endDate);
+                const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                
+                document.getElementById('rentDays').value = daysDiff;
+                generateDocument(); // 일수가 변경되면 문서도 자동 업데이트
+            }
+        }
+        
+        // 문서 생성 함수
+        function generateDocument() {
+            // 입력값 수집
+            const settlementDateInput = document.getElementById('settlementDate');
+            const documentTitleInput = document.getElementById('documentTitle');
+            const documentVersionInput = document.getElementById('documentVersion');
+            const releaseDateInput = document.getElementById('releaseDate');
+            const depositReturnInput = document.getElementById('depositReturn');
+            const longTermRepairInput = document.getElementById('longTermRepair');
+            const monthlyRentInput = document.getElementById('monthlyRent');
+            const rentDaysInput = document.getElementById('rentDays');
+            const contractEndDateInput = document.getElementById('contractEndDate');
+            const moveOutDateInput = document.getElementById('moveOutDate');
+            const managementFeeInput = document.getElementById('managementFee');
+            const utilityFeeInput = document.getElementById('utilityFee');
+            const managementRequestDateInput = document.getElementById('managementRequestDate');
+            const depositAccountInput = document.getElementById('depositAccount');
+            const managementFeeAccountInput = document.getElementById('managementFeeAccount');
+            const checks = {
+                check1: document.getElementById('check1').checked,
+                check2: document.getElementById('check2').checked,
+                check3: document.getElementById('check3').checked,
+                check4: document.getElementById('check4').checked,
+                check5: document.getElementById('check5').checked,
+            };
+            
+            // 과납/미납 체크 상태 확인
+            const isOverpaid = document.getElementById('overpaid').checked;
+            const isUnpaid = document.getElementById('unpaid').checked;
+            
+            const settlementDate = settlementDateInput.value;
+            const documentTitle = documentTitleInput.value || documentTitleInput.placeholder || '잔금 정산 확인서';
+            const documentVersion = documentVersionInput.value || documentVersionInput.placeholder || '';
+            const releaseDate = releaseDateInput.value;
+            const depositReturn = depositReturnInput.value || depositReturnInput.placeholder || '0';
+            const longTermRepair = longTermRepairInput.value || longTermRepairInput.placeholder || '0';
+            const monthlyRent = monthlyRentInput.value || '0';
+            const rentDays = rentDaysInput.value || '0';
+            
+            // 월세 일할계산 공식: 월세 * 일수 * 12 / 365
+            const dailyRentCalculation = Math.round((parseFloat(monthlyRent) * parseFloat(rentDays) * 12) / 365);
+            const managementFee = managementFeeInput.value || '0';
+            const utilityFee = utilityFeeInput.value || '0';
+            const managementRequestDate = managementRequestDateInput.value;
+            
+            // 반환금합계 계산 (보증금 + 장기수선충당금 +/- 월세일할계산)
+            let totalRefund = parseFloat(depositReturn) + parseFloat(longTermRepair);
+            if (isOverpaid) {
+                totalRefund += dailyRentCalculation; // 과납시 더하기
+            } else if (isUnpaid) {
+                totalRefund -= dailyRentCalculation; // 미납시 빼기
+            }
+            const depositAccount = depositAccountInput.value || depositAccountInput.placeholder || '계좌 정보 미입력';
+            const managementFeeAccount = managementFeeAccountInput.value || managementFeeAccountInput.placeholder || '계좌 정보 미입력';
+
+            // 체크박스 HTML 생성 함수
+            function getChecklistItem(label, isChecked) {
+                const icon = isChecked ? '<i class="fas fa-check-square text-green-600 mr-2"></i>' : '<i class="fas fa-square text-gray-400 mr-2"></i>';
+                return `<li class="flex items-start mb-1">${icon}<span>${label}</span></li>`;
+            }
+
+            // 숫자 포맷팅 함수 (원 단위, 세 자리마다 쉼표 + 한글 표기)
+            function formatNumber(num) {
+                const numValue = parseInt(num) || 0;
+                let result = `${numValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}원`;
+                
+                // 1000만원 이상일 경우 한글 표기 추가
+                if (numValue >= 100000000) { // 1억 이상
+                    const eok = Math.floor(numValue / 100000000);
+                    const remain = numValue % 100000000;
+                    const cheon = Math.floor(remain / 10000000);
+                    const manwon = Math.floor((remain % 10000000) / 10000);
+                    
+                    let hangeul = `${eok}억`;
+                    if (cheon > 0) hangeul += `${cheon}천`;
+                    if (manwon > 0) hangeul += `${manwon}만`;
+                    hangeul += '원';
+                    
+                    result += ` (${hangeul})`;
+                } else if (numValue >= 10000000) { // 1천만원 이상 1억 미만
+                    const cheon = Math.floor(numValue / 10000000);
+                    const manwon = Math.floor((numValue % 10000000) / 10000);
+                    
+                    let hangeul = '';
+                    if (cheon > 0) hangeul += `${cheon}천`;
+                    if (manwon > 0) hangeul += `${manwon}만`;
+                    hangeul += '원';
+                    
+                    result += ` (${hangeul})`;
+                }
+                
+                return result;
+            }
+
+            // CSS 변수 동적 설정 (테마 색상 및 배경 이미지)
+            const root = document.documentElement;
+            let themeColor = '#F97316'; // Orange
+            let themeColorLight = '#FED7AA';
+            let themeColorStart = '#F97316';
+            let themeColorEnd = '#EA580C';
+            let headerBgImage = "none";
+            let headerBgPosition = 'right 15% top 15%';
+            let headerBgSize = '30% auto';
+            let headerBgOpacity = 0.15;
+            let headerMixBlendMode = 'soft-light';
+
+            root.style.setProperty('--accent-color', themeColor);
+            root.style.setProperty('--accent-color-light', themeColorLight);
+            root.style.setProperty('--accent-color-start', themeColorStart);
+            root.style.setProperty('--accent-color-end', themeColorEnd);
+            root.style.setProperty('--header-bg-image', headerBgImage);
+            root.style.setProperty('--header-bg-position', headerBgPosition);
+            root.style.setProperty('--header-bg-size', headerBgSize);
+            root.style.setProperty('--header-bg-opacity', headerBgOpacity);
+            root.style.setProperty('--header-mix-blend-mode', headerMixBlendMode);
+
+            let generatedHtml = `
+                <div class="fade-in">
+                    <div class="gradient-header-bg text-center mb-8">
+                        <h1 class="text-3xl font-bold mb-2">${documentTitle}</h1>
+                        ${settlementDate ? `<p class="text-lg text-black"><span class="font-semibold">잔금일:</span> ${new Date(settlementDate).toLocaleDateString('ko-KR')}</p>` : ''}
+                        ${documentVersion ? `<p class="text-lg text-black"><span class="font-semibold">퇴실점검일정:</span> ${documentVersion}</p>` : ''}
+                        <p class="text-lg text-black"><span class="font-semibold">입주점검일정:</span> ${releaseDate || '미정'}</p>
+                    </div>
+
+                    
+                    <div class="material-section">
+                        <h2 class="section-heading">
+                            <i class="fas fa-coins"></i>
+                            정산 내역
+                        </h2>
+                        <table class="w-full table-auto border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left">항목</th>
+                                    <th class="py-3 px-6 text-right">금액 (원)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-600 text-sm font-light">
+                                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                    <td class="py-3 px-6 text-left">보증금 반환금</td>
+                                    <td class="py-3 px-6 text-right">${formatNumber(depositReturn)}</td>
+                                </tr>
+                                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                    <td class="py-3 px-6 text-left">장기수선충당금</td>
+                                    <td class="py-3 px-6 text-right">${formatNumber(longTermRepair)}</td>
+                                </tr>
+                                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                    <td class="py-3 px-6 text-left">월세 일할계산 ${isOverpaid ? '(과납)' : isUnpaid ? '(미납)' : ''}</td>
+                                    <td class="py-3 px-6 text-right ${isUnpaid ? 'text-red-500' : ''}">${isUnpaid ? '- ' : ''}${formatNumber(dailyRentCalculation)}</td>
+                                </tr>
+                                <tr class="border-t-2 border-gray-400 bg-yellow-50">
+                                    <td class="py-3 px-6 text-left font-bold text-gray-900">반환금합계</td>
+                                    <td class="py-3 px-6 text-right font-bold text-gray-900 text-lg">${formatNumber(totalRefund)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    ${(isOverpaid || isUnpaid) ? `
+                    <div class="material-section bg-blue-50 border-l-4 border-blue-500">
+                        <h2 class="section-heading">
+                            <i class="fas fa-calculator"></i>
+                            월세 일할계산 안내
+                        </h2>
+                        <div class="bg-white p-4 rounded-md border border-blue-200">
+                            <p class="text-gray-700 text-sm font-mono">
+                                ${formatNumber(monthlyRent)} × 12개월 ÷ 365일 × ${rentDays}일 = ${formatNumber(dailyRentCalculation)}
+                            </p>
+                            <p class="text-gray-600 text-xs mt-2">
+                                * 월세를 일할계산하여 ${isOverpaid ? '과납금을 세입자에게 반환합니다.' : '미납금을 보증금에서 차감합니다.'}
+                            </p>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="material-section">
+                        <h2 class="section-heading justify-between">
+                            <span>
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                관리비/공과금 정산
+                            </span>
+                            ${managementRequestDate ? `<span class="text-sm text-gray-600 font-normal">관리비정산 요청일: ${new Date(managementRequestDate).toLocaleDateString('ko-KR')}</span>` : ''}
+                        </h2>
+                        <table class="w-full table-auto border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left">항목</th>
+                                    <th class="py-3 px-6 text-right">금액 (원)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-600 text-sm font-light">
+                                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                    <td class="py-3 px-6 text-left">관리비</td>
+                                    <td class="py-3 px-6 text-right">${formatNumber(managementFee)}</td>
+                                </tr>
+                                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                    <td class="py-3 px-6 text-left">공과금</td>
+                                    <td class="py-3 px-6 text-right">${formatNumber(utilityFee)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="material-section">
+                        <h2 class="section-heading">
+                            <i class="fas fa-university"></i>
+                            계좌 정보
+                        </h2>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong class="font-semibold">보증금/장기수선충당금 반환 계좌:</strong> ${depositAccount}</li>
+                            <li><strong class="font-semibold">관리비 승계 계좌:</strong> ${managementFeeAccount}</li>
+                        </ul>
+                    </div>
+
+                    <div class="material-section">
+                        <h2 class="section-heading">
+                            <i class="fas fa-list-ul"></i>
+                            잔금일 체크리스트
+                        </h2>
+                        <ul class="space-y-2 text-gray-700">
+                            ${getChecklistItem('은행대출금과 남은 잔금, 월세 입금 확인', checks.check1)}
+                            ${getChecklistItem('퇴실 세입자 관리비 납부 확인', checks.check2)}
+                            ${getChecklistItem('퇴실 세입자 인터넷, 도시가스 등 공과금 납부 확인', checks.check3)}
+                            ${getChecklistItem('관리비 승계 여부 확인', checks.check4)}
+                            ${getChecklistItem('보증금 반환 후 공동현관/호실 비밀번호 확인', checks.check5)}
+                        </ul>
+                    </div>
+
+                    <div class="text-center text-gray-500 text-sm mt-8 pt-4 border-t border-gray-300 print-only">
+                        <p>위 내용은 ${releaseDate || '입주점검일정 미정'}에 확인된 사항입니다.</p>
+                        <p>본 문서는 ${new Date().toLocaleDateString('ko-KR')}에 생성되었습니다.</p>
+                        <p>&copy; ${new Date().getFullYear()} 잔금 정산 확인서 작성 도우미.</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('documentPreview').innerHTML = generatedHtml;
+            // 모바일에서 미리보기로 스크롤
+            if (window.innerWidth < 1024) {
+                document.getElementById('documentPreview').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        // placeholder 텍스트를 실제 값으로 채우는 함수
+        function setupInputPlaceholders() {
+            const inputs = document.querySelectorAll('#documentForm input[placeholder], #documentForm textarea[placeholder]');
+            inputs.forEach(input => {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Tab' && input.value.trim() === '') {
+                        e.preventDefault(); // 기본 Tab 동작 방지
+                        input.value = input.placeholder;
+                        saveFormDataToLocalStorage(); // Tab 키로 입력 시 자동 저장
+                        generateDocument(); // Tab 키로 입력 시 미리보기 업데이트
+                    }
+                });
+            });
+        }
+        // 초기화 및 자동 저장/로드 기능 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            setupInputPlaceholders(); // Tab 키 기능 설정
+            loadFormDataFromLocalStorage(); // 페이지 로드 시 localStorage에서 데이터 불러오기
+            updateSettlementListUI(); // 페이지 로드 시 정산서 목록 UI 초기화
+            // 모든 입력 필드에 input 이벤트 리스너 추가하여 데이터 변경 시 자동 저장
+            const formElements = document.querySelectorAll(`#${formId} input, #${formId} textarea, #${formId} select`);
+            formElements.forEach(element => {
+                element.addEventListener('input', () => {
+                    saveFormDataToLocalStorage();
+                    generateDocument(); // 입력 시 미리보기 자동 업데이트
+                });
+                element.addEventListener('change', () => { // select, date, checkbox 등 변경 시
+                    saveFormDataToLocalStorage();
+                    generateDocument(); // 변경 시 미리보기 자동 업데이트
+                });
+            });
+            
+            // 만기일, 퇴실일 변경 시 일수 자동 계산
+            document.getElementById('contractEndDate').addEventListener('change', calculateDateDifference);
+            document.getElementById('moveOutDate').addEventListener('change', calculateDateDifference);
+            
+            document.getElementById('clearFormButton').addEventListener('click', function() {
+                clearForm();
+                currentSettlementId = null; // 현재 편집 중인 정산서 ID 초기화
+                updateSettlementListUI(); // 목록 UI 업데이트
+            }); // 양식 초기화 버튼
+            // 폼 제출 시 페이지 새로고침 방지 및 정산서 저장
+            document.getElementById('documentForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 정산서 저장
+                const settlementId = saveCurrentSettlement();
+                
+                // 문서 생성
+                generateDocument();
+                
+                // 성공 메시지 표시
+                const roomName = document.getElementById('documentTitle').value || '미지정';
+                alert(`${roomName} 정산서가 저장되었습니다.`);
+            });
+        });
+    </script>
+</body>
+</html>
