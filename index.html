@@ -878,9 +878,33 @@
                     // Firebase에서 삭제 시도
                     if (useFirebase) {
                         try {
-                            console.log('🗑️ Firebase에서 삭제 시도:', id);
-                            await settlementsCollection.doc(id).delete();
-                            console.log('🗑️ Firebase에서 삭제 완료');
+                            if (id.startsWith('settlement_')) {
+                                console.log('🗑️ localStorage ID이므로 Firebase에서 매칭되는 문서 찾아서 삭제');
+                                // localStorage ID인 경우, 같은 데이터를 가진 Firebase 문서 찾기
+                                const list = await getSettlementList();
+                                const settlement = list.find(item => item.id === id);
+                                if (settlement) {
+                                    // Firebase에서 같은 roomName과 settlementDate를 가진 문서들 찾기
+                                    const snapshot = await settlementsCollection
+                                        .where('roomName', '==', settlement.roomName)
+                                        .where('settlementDate', '==', settlement.settlementDate)
+                                        .get();
+                                    
+                                    // Firebase 문서들 삭제
+                                    const deletePromises = [];
+                                    snapshot.forEach(doc => {
+                                        console.log('🗑️ Firebase 문서 삭제:', doc.id);
+                                        deletePromises.push(settlementsCollection.doc(doc.id).delete());
+                                    });
+                                    
+                                    await Promise.all(deletePromises);
+                                    console.log('🗑️ Firebase에서 관련 문서 삭제 완료');
+                                }
+                            } else {
+                                console.log('🗑️ Firebase ID로 직접 삭제:', id);
+                                await settlementsCollection.doc(id).delete();
+                                console.log('🗑️ Firebase에서 삭제 완료');
+                            }
                         } catch (error) {
                             console.log('Firebase 삭제 실패:', error);
                         }
