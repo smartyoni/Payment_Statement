@@ -1080,47 +1080,38 @@
             };
 
             let generatedHtml = `
-                <div class="space-y-3">
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px;">
                     <!-- 기본 정보 카드 -->
-                    <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                        <div class="flex items-center justify-between mb-2">
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background-color: #f9fafb; margin-bottom: 16px;">
+                        <div style="margin-bottom: 12px;">
                             <div>
-                                <h3 class="font-semibold text-gray-800 flex items-center text-sm">
-                                    <i class="fas fa-file-alt text-gray-500 mr-2"></i>
-                                    ${documentTitle || '미지정'} 잔금 정산 확인서
+                                <h3 style="font-weight: 600; color: #374151; font-size: 16px; margin: 0 0 8px 0; display: flex; align-items: center;">
+                                    📄 ${documentTitle || '미지정'} 잔금 정산 확인서
                                 </h3>
-                                <div class="text-xs text-gray-500 mt-1 space-y-0.5">
-                                    <div>퇴실점검: ${documentVersion ? formatDateTime(documentVersion) : '미정'} | 입주점검: ${releaseDate ? formatDateTime(releaseDate) : '미정'}</div>
-                                    ${managementRequestDate ? `<div>관리비정산요청일: ${formatDate(managementRequestDate)}</div>` : ''}
+                                <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                                    <div style="margin-bottom: 2px;">퇴실점검: ${documentVersion ? formatDateTime(documentVersion) : '미정'} | 입주점검: ${releaseDate ? formatDateTime(releaseDate) : '미정'}</div>
+                                    ${managementRequestDate ? `<div style="margin-bottom: 2px;">관리비정산요청일: ${formatDate(managementRequestDate)}</div>` : ''}
                                 </div>
                             </div>
                         </div>
-                        <div class="text-xs text-gray-600 space-y-1">
-                            ${settlementDate ? `<div><strong>잔금일:</strong> ${formatDate(settlementDate)}</div>` : ''}
+                        <div style="font-size: 12px; color: #4b5563;">
+                            ${settlementDate ? `<div style="margin-bottom: 4px;"><strong>잔금일:</strong> ${formatDate(settlementDate)}</div>` : ''}
                         </div>
                     </div>
 
                     <!-- 정산 내역 카드 -->
-                    <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                        <h4 class="font-semibold text-gray-800 text-sm mb-2">
-                            <i class="fas fa-coins text-gray-500 mr-2"></i>정산 내역
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background-color: #f9fafb; margin-bottom: 16px;">
+                        <h4 style="font-weight: 600; color: #374151; font-size: 14px; margin: 0 0 12px 0;">
+                            💰 정산 내역
                         </h4>
-                        <div class="space-y-1 text-xs text-gray-600">
-                            ${depositReturn && parseInt(depositReturn) > 0 ? `<div class="flex justify-between"><span>보증금:</span><span>${formatKRW(depositReturn)}</span></div>` : ''}
-                            ${longTermRepair && parseInt(longTermRepair) > 0 ? `<div class="flex justify-between"><span>장기수선:</span><span>${formatKRW(longTermRepair)}</span></div>` : ''}
-                            ${(isOverpaid || isUnpaid) && dailyRentCalculation > 0 ? `
-                                <div class="flex justify-between">
-                                    <span>월세 ${isOverpaid ? '(과납)' : '(미납)'}:</span>
-                                    <span class="${isUnpaid ? 'text-red-500' : ''}">${isUnpaid ? '- ' : ''}${formatKRW(dailyRentCalculation)}</span>
-                                </div>
-                            ` : ''}
-                            <div class="flex justify-between font-semibold border-t pt-1 mt-2">
-                                <span>반환금합계:</span>
-                                <span class="text-blue-600">${formatKRW(totalRefund)}</span>
+                        <div style="font-size: 12px; color: #4b5563;">
+                            ${depositReturn && parseInt(depositReturn) > 0 ? `<span>보증금: ${formatKRW(depositReturn)}</span>` : ''}${longTermRepair && parseInt(longTermRepair) > 0 ? `${depositReturn && parseInt(depositReturn) > 0 ? '<br>' : ''}<span>장기수선: ${formatKRW(longTermRepair)}</span>` : ''}${(isOverpaid || isUnpaid) && dailyRentCalculation > 0 ? `${(depositReturn && parseInt(depositReturn) > 0) || (longTermRepair && parseInt(longTermRepair) > 0) ? '<br>' : ''}<span>월세 ${isOverpaid ? '(과납)' : '(미납)'}: ${isUnpaid ? '- ' : ''}${formatKRW(dailyRentCalculation)}</span>` : ''}
+                            <div style="font-weight: 600; border-top: 1px solid #d1d5db; padding-top: 4px; margin-top: 8px;">
+                                반환금합계: ${formatKRW(totalRefund)}
                             </div>
                             ${(isOverpaid || isUnpaid) && dailyRentCalculation > 0 ? `
-                                <div class="mt-2 pt-2 border-t border-gray-200">
-                                    <div class="text-xs ${isUnpaid ? 'text-red-600' : 'text-blue-600'} font-medium">
+                                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+                                    <div style="font-size: 12px; ${isUnpaid ? 'color: #dc2626;' : 'color: #2563eb;'} font-weight: 500;">
                                         ${isUnpaid ? 
                                             `미납월세 ${formatKRW(dailyRentCalculation)}을 임대인에게 납부하셔야 합니다.` :
                                             `더 납부된 월세 ${formatKRW(dailyRentCalculation)}을 세입자에게 반환하셔야 합니다.`
@@ -1133,34 +1124,33 @@
 
                     ${(managementFee && parseInt(managementFee) > 0) || (utilityFee && parseInt(utilityFee) > 0) ? `
                     <!-- 관리비/공과금 카드 -->
-                    <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                        <h4 class="font-semibold text-gray-800 text-sm mb-2">
-                            <i class="fas fa-file-invoice-dollar text-gray-500 mr-2"></i>관리비/공과금
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background-color: #f9fafb; margin-bottom: 16px;">
+                        <h4 style="font-weight: 600; color: #374151; font-size: 14px; margin: 0 0 12px 0;">
+                            🧾 관리비/공과금
                         </h4>
-                        <div class="space-y-1 text-xs text-gray-600">
-                            ${managementFee && parseInt(managementFee) > 0 ? `<div class="flex justify-between"><span>관리비:</span><span>${formatKRW(managementFee)}</span></div>` : ''}
-                            ${utilityFee && parseInt(utilityFee) > 0 ? `<div class="flex justify-between"><span>공과금:</span><span>${formatKRW(utilityFee)}</span></div>` : ''}
+                        <div style="font-size: 12px; color: #4b5563;">
+                            ${managementFee && parseInt(managementFee) > 0 ? `<span>관리비: ${formatKRW(managementFee)}</span>` : ''}${utilityFee && parseInt(utilityFee) > 0 ? `${managementFee && parseInt(managementFee) > 0 ? '<br>' : ''}<span>공과금: ${formatKRW(utilityFee)}</span>` : ''}
                         </div>
                     </div>
                     ` : ''}
 
                     ${(depositAccount || managementFeeAccount) ? `
                     <!-- 계좌 정보 카드 -->
-                    <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                        <h4 class="font-semibold text-gray-800 text-sm mb-2">
-                            <i class="fas fa-university text-gray-500 mr-2"></i>계좌 정보
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background-color: #f9fafb; margin-bottom: 16px;">
+                        <h4 style="font-weight: 600; color: #374151; font-size: 14px; margin: 0 0 12px 0;">
+                            🏦 계좌 정보
                         </h4>
-                        <div class="space-y-2 text-xs text-gray-600">
+                        <div style="font-size: 12px; color: #4b5563;">
                             ${depositAccount ? `
-                                <div>
-                                    <strong class="block">보증금/장기수선충당금 반환 계좌:</strong>
-                                    <div class="whitespace-pre-wrap pl-2 text-gray-500">${depositAccount}</div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong style="display: block; margin-bottom: 4px;">보증금/장기수선충당금 반환 계좌:</strong>
+                                    <div style="white-space: pre-wrap; padding-left: 8px; color: #6b7280;">${depositAccount}</div>
                                 </div>
                             ` : ''}
                             ${managementFeeAccount ? `
-                                <div>
-                                    <strong class="block">관리비 승계 계좌:</strong>
-                                    <div class="whitespace-pre-wrap pl-2 text-gray-500">${managementFeeAccount}</div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong style="display: block; margin-bottom: 4px;">관리비 승계 계좌:</strong>
+                                    <div style="white-space: pre-wrap; padding-left: 8px; color: #6b7280;">${managementFeeAccount}</div>
                                 </div>
                             ` : ''}
                         </div>
@@ -1169,16 +1159,16 @@
 
                     ${checklistItems.length > 0 ? `
                     <!-- 체크리스트 카드 -->
-                    <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                        <h4 class="font-semibold text-gray-800 text-sm mb-2">
-                            <i class="fas fa-list-ul text-gray-500 mr-2"></i>잔금일 체크리스트
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background-color: #f9fafb; margin-bottom: 16px;">
+                        <h4 style="font-weight: 600; color: #374151; font-size: 14px; margin: 0 0 12px 0;">
+                            ✅ 잔금일 체크리스트
                         </h4>
-                        <div class="space-y-1 text-xs text-gray-600">
+                        <div style="font-size: 12px; color: #4b5563;">
                             ${checklistItems.map((item, index) => {
                                 const isChecked = checks[`check${index + 1}`];
                                 const icon = isChecked ? '✅' : '⬜';
-                                const textStyle = isChecked ? 'line-through text-gray-400' : '';
-                                return `<div class="flex items-start"><span class="mr-2">${icon}</span><span class="${textStyle}">${item}</span></div>`;
+                                const textStyle = isChecked ? 'text-decoration: line-through; color: #9ca3af;' : '';
+                                return `<div style="display: flex; align-items: flex-start; margin-bottom: 4px;"><span style="margin-right: 8px;">${icon}</span><span style="${textStyle}">${item}</span></div>`;
                             }).join('')}
                         </div>
                     </div>
