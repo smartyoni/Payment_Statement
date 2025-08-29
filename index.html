@@ -269,23 +269,23 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="depositReturn">보증금 반환금</label>
-                                <input type="number" id="depositReturn" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="text" id="depositReturn" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="longTermRepair">장기수선충당금</label>
-                                <input type="number" id="longTermRepair" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="text" id="longTermRepair" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="managementFee">관리비</label>
-                                <input type="number" id="managementFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="text" id="managementFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="utilityFee">공과금</label>
-                                <input type="number" id="utilityFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="text" id="utilityFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="monthlyRent">월세</label>
-                                <input type="number" id="monthlyRent" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="text" id="monthlyRent" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="rentDays">일수 (자동계산)</label>
@@ -409,6 +409,55 @@
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     addChecklistItem();
+                }
+            });
+        }
+        
+        // 숫자 포맷팅 함수 (쉼표 추가)
+        function formatNumberInput(value) {
+            // 숫자가 아닌 문자 제거
+            const numericValue = value.replace(/[^\d]/g, '');
+            // 쉼표 추가
+            return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+        
+        // 숫자 입력 필드에서 쉼표 제거한 순수 숫자 값 반환
+        function getNumericValue(formattedValue) {
+            return formattedValue.replace(/,/g, '');
+        }
+        
+        // 금액 입력 필드에 포맷팅 이벤트 설정
+        function setupNumberFormatting() {
+            const numberInputs = [
+                'depositReturn', 'longTermRepair', 'managementFee', 
+                'utilityFee', 'monthlyRent'
+            ];
+            
+            numberInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    // input 이벤트로 실시간 포맷팅
+                    input.addEventListener('input', function(e) {
+                        const cursorPosition = e.target.selectionStart;
+                        const originalLength = e.target.value.length;
+                        
+                        const formatted = formatNumberInput(e.target.value);
+                        e.target.value = formatted;
+                        
+                        // 커서 위치 조정 (쉼표 추가로 인한 위치 변경 보정)
+                        const newLength = formatted.length;
+                        const lengthDiff = newLength - originalLength;
+                        const newPosition = cursorPosition + lengthDiff;
+                        
+                        e.target.setSelectionRange(newPosition, newPosition);
+                    });
+                    
+                    // paste 이벤트 처리
+                    input.addEventListener('paste', function(e) {
+                        setTimeout(() => {
+                            e.target.value = formatNumberInput(e.target.value);
+                        }, 0);
+                    });
                 }
             });
         }
@@ -914,15 +963,16 @@
             const documentTitle = documentTitleInput.value || documentTitleInput.placeholder || '잔금 정산 확인서';
             const documentVersion = documentVersionInput.value || documentVersionInput.placeholder || '';
             const releaseDate = releaseDateInput.value;
-            const depositReturn = depositReturnInput.value || depositReturnInput.placeholder || '0';
-            const longTermRepair = longTermRepairInput.value || longTermRepairInput.placeholder || '0';
-            const monthlyRent = monthlyRentInput.value || '0';
+            // 쉼표 제거하고 숫자값 추출
+            const depositReturn = getNumericValue(depositReturnInput.value) || '0';
+            const longTermRepair = getNumericValue(longTermRepairInput.value) || '0';
+            const monthlyRent = getNumericValue(monthlyRentInput.value) || '0';
             const rentDays = rentDaysInput.value || '0';
+            const managementFee = getNumericValue(managementFeeInput.value) || '0';
+            const utilityFee = getNumericValue(utilityFeeInput.value) || '0';
             
             // 월세 일할계산 공식: 월세 * 일수 * 12 / 365
             const dailyRentCalculation = Math.round((parseFloat(monthlyRent) * parseFloat(rentDays) * 12) / 365);
-            const managementFee = managementFeeInput.value || '0';
-            const utilityFee = utilityFeeInput.value || '0';
             const managementRequestDate = managementRequestDateInput.value;
             
             // 반환금합계 계산 (보증금 + 장기수선충당금 +/- 월세일할계산)
@@ -1146,6 +1196,7 @@
             setupInputPlaceholders(); // Tab 키 기능 설정
             renderChecklist(); // 체크리스트 초기 렌더링
             setupChecklistEnterKey(); // 체크리스트 엔터 키 설정
+            setupNumberFormatting(); // 숫자 포맷팅 설정
             loadFormDataFromLocalStorage(); // 페이지 로드 시 localStorage에서 데이터 불러오기
             updateSettlementListUI(); // 페이지 로드 시 정산서 목록 UI 초기화
             // 모든 입력 필드에 input 이벤트 리스너 추가하여 데이터 변경 시 자동 저장
