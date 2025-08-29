@@ -1015,6 +1015,53 @@
                 return dateA - dateB; // 오름차순 (빠른 날짜가 먼저)
             });
             
+            // 미입력 필드 표시 함수
+            function getMissingFieldsDisplay(formData) {
+                const missingFields = [];
+                const fieldLabels = {
+                    'managementFee': '관리비',
+                    'moveOutDate': '퇴실',
+                    'documentVersion': '입주점검일정',
+                    'depositAccount': '보증금반환',
+                    'managementFeeAccount': '관리비승계계좌'
+                };
+                
+                // 각 필드가 비어있는지 확인
+                Object.keys(fieldLabels).forEach(field => {
+                    const value = formData[field];
+                    if (!value || value.toString().trim() === '') {
+                        missingFields.push(fieldLabels[field]);
+                    }
+                });
+                
+                if (missingFields.length === 0) {
+                    return '<div class="text-green-600">모든 기본정보 입력 완료</div>';
+                }
+                
+                // 라인 길이 제한을 위한 문자열 분할 로직
+                const maxLineLength = 25;
+                const lines = [];
+                let currentLine = '';
+                
+                missingFields.forEach((field, index) => {
+                    const separator = index === 0 ? '' : ', ';
+                    const testLine = currentLine + separator + field;
+                    
+                    if (testLine.length > maxLineLength && currentLine !== '') {
+                        lines.push(currentLine);
+                        currentLine = field;
+                    } else {
+                        currentLine = testLine;
+                    }
+                });
+                
+                if (currentLine) {
+                    lines.push(currentLine);
+                }
+                
+                return lines.map(line => `<div style="color: #ea580c;">${line}</div>`).join('');
+            }
+            
             listDiv.innerHTML = list.map(settlement => {
                 const isCurrentlyEditing = currentSettlementId === settlement.id;
                 const updatedDate = new Date(settlement.updatedAt).toLocaleDateString('ko-KR');
@@ -1058,8 +1105,7 @@
                                     ${isCurrentlyEditing ? '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">편집중</span>' : ''}
                                 </div>
                                 <div class="text-xs text-gray-600 mb-2">
-                                    <div>잔금일: ${settlementDisplayDate}</div>
-                                    <div>반환금: ${formatKRW(totalRefund)}</div>
+                                    ${getMissingFieldsDisplay(formData)}
                                 </div>
                                 <div class="flex space-x-1" onclick="event.stopPropagation()">
                                     ${!isCurrentlyEditing ? `
