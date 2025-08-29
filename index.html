@@ -916,7 +916,7 @@
                 
                 return `
                     <div class="border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors ${isCurrentlyEditing ? 'bg-blue-50 border-blue-300' : ''} mb-3">
-                        <div class="p-3 cursor-pointer" onclick="toggleSettlementDetails('${settlement.id}')">
+                        <div class="p-3">
                             <div class="flex flex-col">
                                 <div class="flex items-center justify-between mb-2">
                                     <h3 class="font-semibold text-gray-800 flex items-center text-sm">
@@ -930,9 +930,6 @@
                                     <div>반환금: ${formatKRW(totalRefund)}</div>
                                 </div>
                                 <div class="flex space-x-1" onclick="event.stopPropagation()">
-                                    <button onclick="toggleSettlementDetails('${settlement.id}')" class="flex-1 bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600 transition-colors">
-                                        <i class="fas fa-eye mr-1"></i>상세보기
-                                    </button>
                                     ${!isCurrentlyEditing ? `
                                         <button onclick="loadSettlement('${settlement.id}')" class="flex-1 bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors">
                                             <i class="fas fa-edit mr-1"></i>불러오기
@@ -944,65 +941,11 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div id="details-${settlement.id}" class="hidden border-t border-gray-200 p-3 bg-gray-50">
-                            <div class="space-y-3 text-xs">
-                                <div class="space-y-1">
-                                    <h4 class="font-semibold text-gray-800 text-sm">정산 내역</h4>
-                                    <div class="space-y-1">
-                                        <div class="flex justify-between">
-                                            <span>보증금:</span>
-                                            <span>${formatKRW(depositReturn)}</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>장기수선:</span>
-                                            <span>${formatKRW(longTermRepair)}</span>
-                                        </div>
-                                        ${(isOverpaid || isUnpaid) ? `
-                                            <div class="flex justify-between">
-                                                <span>월세 ${isOverpaid ? '(과납)' : '(미납)'}:</span>
-                                                <span class="${isUnpaid ? 'text-red-500' : ''}">${isUnpaid ? '- ' : ''}${formatKRW(dailyRentCalculation)}</span>
-                                            </div>
-                                        ` : ''}
-                                        <div class="flex justify-between font-semibold border-t pt-1">
-                                            <span>합계:</span>
-                                            <span>${formatKRW(totalRefund)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="space-y-1">
-                                    <h4 class="font-semibold text-gray-800 text-sm">관리비/공과금</h4>
-                                    <div class="flex justify-between">
-                                        <span>관리비:</span>
-                                        <span>${formatKRW(managementFee)}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span>공과금:</span>
-                                        <span>${formatKRW(utilityFee)}</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="space-y-1">
-                                    <h4 class="font-semibold text-gray-800 text-sm">계좌 정보</h4>
-                                    <div class="text-xs text-gray-600">
-                                        <div><strong>보증금:</strong> ${formData.depositAccount ? formData.depositAccount.substring(0, 20) + '...' : '미입력'}</div>
-                                        <div><strong>관리비:</strong> ${formData.managementFeeAccount ? formData.managementFeeAccount.substring(0, 20) + '...' : '미입력'}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 `;
             }).join('');
         }
         
-        function toggleSettlementDetails(id) {
-            const detailsDiv = document.getElementById(`details-${id}`);
-            if (detailsDiv) {
-                detailsDiv.classList.toggle('hidden');
-            }
-        }
         
         function printDocument() {
             const roomName = document.getElementById('documentTitle').value || '정산서';
