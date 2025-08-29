@@ -555,6 +555,9 @@
                 }
             });
             
+            // 체크리스트 항목들도 저장
+            formData.checklistItems = checklistItems;
+            
             const roomName = document.getElementById('documentTitle').value || '미지정';
             const settlementDate = document.getElementById('settlementDate').value;
             const createdAt = new Date().toISOString();
@@ -596,8 +599,15 @@
                 currentSettlementId = id;
                 const formData = settlement.formData;
                 
+                // 체크리스트 항목들 로드
+                if (formData.checklistItems) {
+                    checklistItems = formData.checklistItems;
+                    renderChecklist();
+                }
+                
                 // 폼에 데이터 로드
                 for (const elementId in formData) {
+                    if (elementId === 'checklistItems') continue; // 체크리스트는 별도 처리됨
                     const element = document.getElementById(elementId);
                     if (element) {
                         if (element.type === 'checkbox' || element.type === 'radio') {
