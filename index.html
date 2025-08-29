@@ -1611,9 +1611,26 @@
             // 모바일 환경이 아니고 강제 모바일 뷰도 아니면 실행하지 않음
             if (window.innerWidth >= 1280 && !document.body.classList.contains('force-mobile-view')) return;
             
+            // 특정 요소에서는 스와이프 비활성화 (버튼, 입력 필드, 링크 등)
+            const target = e.target;
+            if (target.tagName === 'BUTTON' || 
+                target.tagName === 'INPUT' || 
+                target.tagName === 'TEXTAREA' || 
+                target.tagName === 'SELECT' ||
+                target.tagName === 'A' ||
+                target.closest('button') ||
+                target.closest('input') ||
+                target.closest('textarea') ||
+                target.closest('select') ||
+                target.closest('a')) {
+                console.log('👆 스와이프 비활성화 요소:', target.tagName);
+                return;
+            }
+            
             const firstTouch = e.touches[0];
             touchStartX = firstTouch.clientX;
             touchStartY = firstTouch.clientY;
+            console.log('👆 터치 시작:', touchStartX, touchStartY);
         }
 
         function handleTouchMove(e) {
@@ -1821,14 +1838,11 @@
             handleResize(); // 초기 화면 크기에 따른 모드 설정
             window.addEventListener('resize', handleResize); // 화면 크기 변경 감지
             
-            // 스와이프 제스처 이벤트 리스너 등록
-            const mainContent = document.getElementById('mainContent');
-            if (mainContent) {
-                mainContent.addEventListener('touchstart', handleTouchStart, { passive: false });
-                mainContent.addEventListener('touchmove', handleTouchMove, { passive: false });
-                mainContent.addEventListener('touchend', handleTouchEnd, { passive: true });
-                console.log('👆 스와이프 제스처 이벤트 리스너 등록 완료');
-            }
+            // 스와이프 제스처 이벤트 리스너 등록 (화면 전체)
+            document.body.addEventListener('touchstart', handleTouchStart, { passive: false });
+            document.body.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.body.addEventListener('touchend', handleTouchEnd, { passive: true });
+            console.log('👆 스와이프 제스처 이벤트 리스너 등록 완료 (화면 전체)');
             
             // 모바일 환경에서 스와이프 힌트 표시 (3초 후)
             setTimeout(() => {
