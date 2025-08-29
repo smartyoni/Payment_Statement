@@ -7,9 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK 제거됨 (localStorage만 사용) -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap'); /* 제목용 폰트 */
@@ -220,11 +218,7 @@
                             <i class="fas fa-sticky-note mr-1"></i>
                             메모
                         </button>
-                        <button type="submit" form="documentForm" class="bg-blue-600 text-white py-2 px-2 rounded-md hover:bg-blue-700 transition duration-300 font-medium text-xs">
-                            <i class="fas fa-magic mr-1"></i>
-                            생성
-                        </button>
-                        <button type="button" id="saveFormButton" class="bg-green-600 text-white py-2 px-2 rounded-md hover:bg-green-700 transition duration-300 font-medium text-xs">
+                        <button type="submit" form="documentForm" class="bg-green-600 text-white py-2 px-2 rounded-md hover:bg-green-700 transition duration-300 font-medium text-xs">
                             <i class="fas fa-save mr-1"></i>
                             저장
                         </button>
@@ -361,22 +355,7 @@
         </div>
     </div>
     <script>
-        // Firebase 설정
-        // Firebase 콘솔(https://console.firebase.google.com)에서 프로젝트를 생성하고
-        // 웹 앱을 추가한 후 아래 설정을 실제 값으로 교체하세요
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",                    // Firebase 프로젝트 설정에서 복사
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",  // 프로젝트 ID로 교체
-            projectId: "YOUR_PROJECT_ID",              // Firebase 프로젝트 ID로 교체
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",   // 프로젝트 ID로 교체
-            messagingSenderId: "YOUR_SENDER_ID",       // 메시징 센더 ID로 교체
-            appId: "YOUR_APP_ID"                       // 앱 ID로 교체
-        };
-
-        // Firebase 초기화
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const settlementsCollection = db.collection('settlements');
+        // Firebase 제거됨 - localStorage만 사용
 
         // 기존 변수들
         const formId = 'documentForm'; // 폼 ID
@@ -489,44 +468,6 @@
             });
         }
         
-        // 수동 저장 함수
-        async function manualSave() {
-            try {
-                const saveButton = document.getElementById('saveFormButton');
-                const originalText = saveButton.innerHTML;
-                
-                // 저장 중 표시
-                saveButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>저장 중...';
-                saveButton.disabled = true;
-                
-                const settlementId = await saveCurrentSettlement();
-                const roomName = document.getElementById('documentTitle').value || '미지정';
-                
-                // 저장 성공 시 시각적 피드백
-                saveButton.innerHTML = '<i class="fas fa-check mr-2"></i>저장됨';
-                saveButton.classList.remove('bg-green-600', 'hover:bg-green-700');
-                saveButton.classList.add('bg-green-800');
-                
-                setTimeout(() => {
-                    saveButton.innerHTML = originalText;
-                    saveButton.classList.remove('bg-green-800');
-                    saveButton.classList.add('bg-green-600', 'hover:bg-green-700');
-                    saveButton.disabled = false;
-                }, 2000);
-                
-                // 토스트 메시지 표시 (선택사항)
-                showSaveNotification(`${roomName} 정산서가 저장되었습니다.`);
-                
-            } catch (error) {
-                console.error('저장 중 오류 발생:', error);
-                alert('저장 중 오류가 발생했습니다.');
-                
-                // 에러 시 버튼 복원
-                const saveButton = document.getElementById('saveFormButton');
-                saveButton.innerHTML = '<i class="fas fa-save mr-1"></i>저장';
-                saveButton.disabled = false;
-            }
-        }
         
         // 저장 알림 토스트 함수
         function showSaveNotification(message) {
@@ -565,53 +506,20 @@
             }, 3000);
         }
         
-        // Firebase 정산서 관리 함수들
+        // localStorage 정산서 관리 함수들
         async function getSettlementList() {
-            try {
-                const snapshot = await settlementsCollection.orderBy('updatedAt', 'desc').get();
-                const settlements = [];
-                snapshot.forEach(doc => {
-                    settlements.push({ id: doc.id, ...doc.data() });
-                });
-                return settlements;
-            } catch (error) {
-                console.error('정산서 목록 가져오기 실패:', error);
-                // 오류 시 localStorage 백업 사용
-                const stored = localStorage.getItem(settlementListKey);
-                return stored ? JSON.parse(stored) : [];
-            }
+            // localStorage에서 바로 가져오기
+            const stored = localStorage.getItem(settlementListKey);
+            const list = stored ? JSON.parse(stored) : [];
+            // updatedAt 기준으로 정렬 (최신순)
+            return list.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         }
         
-        async function saveSettlementToFirebase(settlementData) {
-            try {
-                if (settlementData.id && settlementData.id.startsWith('settlement_')) {
-                    // 기존 문서 업데이트
-                    await settlementsCollection.doc(settlementData.id).set(settlementData);
-                } else {
-                    // 새 문서 생성
-                    const docRef = await settlementsCollection.add(settlementData);
-                    settlementData.id = docRef.id;
-                }
-                
-                // localStorage에도 백업 저장
-                const list = await getSettlementList();
-                localStorage.setItem(settlementListKey, JSON.stringify(list));
-                
-                return settlementData.id;
-            } catch (error) {
-                console.error('Firebase 저장 실패:', error);
-                // 오류 시 localStorage만 사용
-                return saveSettlementToLocalStorage(settlementData);
-            }
+        async function saveSettlement(settlementData) {
+            // localStorage만 사용
+            return saveSettlementToLocalStorage(settlementData);
         }
         
-        async function deleteSettlementFromFirebase(id) {
-            try {
-                await settlementsCollection.doc(id).delete();
-            } catch (error) {
-                console.error('Firebase 삭제 실패:', error);
-            }
-        }
         
         // 백업용 localStorage 함수들
         function getSettlementListFromLocalStorage() {
@@ -683,7 +591,7 @@
                 settlementData.createdAt = createdAt;
             }
             
-            const savedId = await saveSettlementToFirebase(settlementData);
+            const savedId = await saveSettlement(settlementData);
             currentSettlementId = savedId;
             updateSettlementListUI();
             
@@ -691,83 +599,51 @@
         }
         
         async function loadSettlement(id) {
-            try {
-                const doc = await settlementsCollection.doc(id).get();
-                if (doc.exists) {
-                    const settlement = { id: doc.id, ...doc.data() };
-                    
-                    currentSettlementId = id;
-                    const formData = settlement.formData;
-                    
-                    // 체크리스트 항목들 로드
-                    if (formData.checklistItems) {
-                        checklistItems = formData.checklistItems;
-                        renderChecklist();
-                    }
-                    
-                    // 폼에 데이터 로드
-                    for (const elementId in formData) {
-                        if (elementId === 'checklistItems') continue; // 체크리스트는 별도 처리됨
-                        const element = document.getElementById(elementId);
-                        if (element) {
-                            if (element.type === 'checkbox' || element.type === 'radio') {
-                                element.checked = formData[elementId];
-                            } else {
-                                element.value = formData[elementId];
-                            }
+            // localStorage에서 바로 로드
+            const list = await getSettlementList();
+            const settlement = list.find(item => item.id === id);
+            
+            if (settlement) {
+                currentSettlementId = id;
+                const formData = settlement.formData;
+                
+                // 체크리스트 항목들 로드
+                if (formData.checklistItems) {
+                    checklistItems = formData.checklistItems;
+                    renderChecklist();
+                }
+                
+                // 폼에 데이터 로드
+                for (const elementId in formData) {
+                    if (elementId === 'checklistItems') continue; // 체크리스트는 별도 처리됨
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        if (element.type === 'checkbox' || element.type === 'radio') {
+                            element.checked = formData[elementId];
+                        } else {
+                            element.value = formData[elementId];
                         }
                     }
-                    
-                    generateDocument();
-                } else {
-                    console.error('정산서를 찾을 수 없습니다:', id);
                 }
-            } catch (error) {
-                console.error('정산서 로드 실패:', error);
-                // 백업으로 localStorage 사용
-                const list = getSettlementListFromLocalStorage();
-                const settlement = list.find(item => item.id === id);
-                if (settlement) {
-                    // localStorage에서 로드하는 기존 로직 실행
-                    const formData = settlement.formData;
-                    currentSettlementId = id;
-                    
-                    if (formData.checklistItems) {
-                        checklistItems = formData.checklistItems;
-                        renderChecklist();
-                    }
-                    
-                    for (const elementId in formData) {
-                        if (elementId === 'checklistItems') continue;
-                        const element = document.getElementById(elementId);
-                        if (element) {
-                            if (element.type === 'checkbox' || element.type === 'radio') {
-                                element.checked = formData[elementId];
-                            } else {
-                                element.value = formData[elementId];
-                            }
-                        }
-                    }
-                    
-                    generateDocument();
-                }
+                
+                generateDocument();
+            } else {
+                console.error('정산서를 찾을 수 없습니다:', id);
             }
         }
         
         async function deleteSettlement(id) {
             if (confirm('정말로 이 정산서를 삭제하시겠습니까?')) {
-                try {
-                    await deleteSettlementFromFirebase(id);
-                    
-                    if (currentSettlementId === id) {
-                        currentSettlementId = null;
-                    }
-                    
-                    updateSettlementListUI();
-                } catch (error) {
-                    console.error('정산서 삭제 실패:', error);
-                    alert('정산서 삭제에 실패했습니다. 다시 시도해 주세요.');
+                // localStorage에서 삭제
+                let list = getSettlementListFromLocalStorage();
+                list = list.filter(item => item.id !== id);
+                localStorage.setItem(settlementListKey, JSON.stringify(list));
+                
+                if (currentSettlementId === id) {
+                    currentSettlementId = null;
                 }
+                
+                updateSettlementListUI();
             }
         }
         
@@ -1390,16 +1266,11 @@
                 updateSettlementListUI(); // 목록 UI 업데이트
             }); // 양식 초기화 버튼
             
-            // 저장 버튼 이벤트 리스너
-            document.getElementById('saveFormButton').addEventListener('click', function() {
-                manualSave();
-            });
-            
-            // Ctrl+S 단축키 이벤트 리스너
+            // Ctrl+S 단축키 이벤트 리스너 (폼 제출과 동일하게 작동)
             document.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.key === 's') {
                     e.preventDefault(); // 브라우저 기본 저장 동작 방지
-                    manualSave();
+                    document.getElementById('documentForm').dispatchEvent(new Event('submit'));
                 }
             });
             // 폼 제출 시 페이지 새로고침 방지 및 정산서 저장
