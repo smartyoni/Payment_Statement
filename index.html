@@ -721,12 +721,12 @@
                                 settlementDate: settlementData.settlementDate
                             });
                             
-                            // localStorage에서 불러온 정산서는 localStorage에서 직접 업데이트
+                            // localStorage에서 불러온 정산서는 localStorage에서만 업데이트
                             settlementData.id = currentSettlementId;
                             saveSettlementToLocalStorage(settlementData);
                             savedId = currentSettlementId;
                             
-                            // Firebase에도 동일한 데이터가 있는지 확인하고 있으면 업데이트, 없으면 무시
+                            // Firebase에는 새로 생성하지 않고, 기존 문서가 있을 때만 업데이트
                             try {
                                 const snapshot = await settlementsCollection
                                     .where('roomName', '==', settlementData.roomName)
@@ -738,11 +738,12 @@
                                     const firebaseDoc = snapshot.docs[0];
                                     await settlementsCollection.doc(firebaseDoc.id).set({
                                         ...settlementData,
-                                        id: firebaseDoc.id // Firebase ID 유지
+                                        id: firebaseDoc.id, // Firebase ID 유지
+                                        updatedAt: new Date().toISOString()
                                     });
                                     console.log('🔄 Firebase 문서도 업데이트:', firebaseDoc.id);
                                 } else {
-                                    console.log('🔄 Firebase에 해당 문서 없음, localStorage만 업데이트');
+                                    console.log('🔄 Firebase에 해당 문서 없음, localStorage만 업데이트 (중복 생성 방지)');
                                 }
                             } catch (error) {
                                 console.log('Firebase 동기화 실패, localStorage만 업데이트:', error);
@@ -993,8 +994,20 @@
         
         async function updateSettlementListUI() {
             console.log('🔄 목록 UI 업데이트 시작');
-            const list = await getSettlementList();
+            let list = await getSettlementList();
             console.log('🔄 불러온 목록 개수:', list.length);
+            
+            // 중복 제거 로직
+            const uniqueMap = new Map();
+            list.forEach(settlement => {
+                const key = `${settlement.roomName}_${settlement.settlementDate}`;
+                if (!uniqueMap.has(key) || new Date(settlement.updatedAt) > new Date(uniqueMap.get(key).updatedAt)) {
+                    uniqueMap.set(key, settlement);
+                }
+            });
+            list = Array.from(uniqueMap.values());
+            console.log('🔄 중복 제거 후 목록 개수:', list.length);
+            
             const listDiv = document.getElementById('settlementList');
             
             if (list.length === 0) {
