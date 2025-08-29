@@ -678,10 +678,13 @@
                 const isOverpaid = formData.overpaid;
                 const isUnpaid = formData.unpaid;
                 
-                // 반환금합계
+                // 반환금합계 (월세 제외)
                 let totalRefund = depositReturn + longTermRepair;
-                if (isOverpaid) totalRefund += dailyRentCalculation;
-                else if (isUnpaid) totalRefund -= dailyRentCalculation;
+                
+                // 월세포함반환금 계산
+                let totalRefundWithRent = totalRefund;
+                if (isOverpaid) totalRefundWithRent += dailyRentCalculation;
+                else if (isUnpaid) totalRefundWithRent -= dailyRentCalculation;
                 
                 // 숫자 포맷팅 함수
                 const formatKRW = (num) => `${num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}원`;
@@ -985,13 +988,13 @@
             // 월세 일할계산 공식: 월세 * 일수 * 12 / 365
             const dailyRentCalculation = Math.round((parseFloat(monthlyRent) * parseFloat(rentDays) * 12) / 365);
             
-            // 반환금합계 계산 (보증금 + 장기수선충당금 +/- 월세일할계산)
+            // 반환금합계 계산 (보증금 + 장기수선충당금, 월세 제외)
             let totalRefund = parseFloat(depositReturn) + parseFloat(longTermRepair);
-            if (isOverpaid) {
-                totalRefund += dailyRentCalculation; // 과납시 더하기
-            } else if (isUnpaid) {
-                totalRefund -= dailyRentCalculation; // 미납시 빼기
-            }
+            
+            // 월세포함반환금 계산
+            let totalRefundWithRent = totalRefund;
+            if (isOverpaid) totalRefundWithRent += dailyRentCalculation;
+            else if (isUnpaid) totalRefundWithRent -= dailyRentCalculation;
             const depositAccount = depositAccountInput.value || depositAccountInput.placeholder || '계좌 정보 미입력';
             const managementFeeAccount = managementFeeAccountInput.value || managementFeeAccountInput.placeholder || '계좌 정보 미입력';
 
@@ -1109,6 +1112,11 @@
                             <div style="font-weight: 600; border-top: 1px solid #d1d5db; padding-top: 4px; margin-top: 8px;">
                                 반환금합계: ${formatKRW(totalRefund)}
                             </div>
+                            ${(isOverpaid || isUnpaid) && dailyRentCalculation > 0 ? `
+                                <div style="font-weight: 600; margin-top: 4px; color: #059669;">
+                                    월세포함반환금: ${formatKRW(totalRefundWithRent)}
+                                </div>
+                            ` : ''}
                             ${(isOverpaid || isUnpaid) && dailyRentCalculation > 0 ? `
                                 <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
                                     <div style="font-size: 12px; ${isUnpaid ? 'color: #dc2626;' : 'color: #2563eb;'} font-weight: 500;">
