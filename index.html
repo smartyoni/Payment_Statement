@@ -6,6 +6,10 @@
     <title>잔금일 정산내역 ✍️</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap'); /* 제목용 폰트 */
@@ -212,15 +216,19 @@
                         정보 입력
                     </h2>
                     <div class="flex space-x-1">
-                        <button type="submit" form="documentForm" class="bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition duration-300 font-medium text-sm">
+                        <button type="button" id="memoButton" class="bg-purple-500 text-white py-2 px-2 rounded-md hover:bg-purple-600 transition duration-300 font-medium text-xs">
+                            <i class="fas fa-sticky-note mr-1"></i>
+                            메모
+                        </button>
+                        <button type="submit" form="documentForm" class="bg-blue-600 text-white py-2 px-2 rounded-md hover:bg-blue-700 transition duration-300 font-medium text-xs">
                             <i class="fas fa-magic mr-1"></i>
                             생성
                         </button>
-                        <button type="button" id="saveFormButton" class="bg-green-600 text-white py-2 px-3 rounded-md hover:bg-green-700 transition duration-300 font-medium text-sm">
+                        <button type="button" id="saveFormButton" class="bg-green-600 text-white py-2 px-2 rounded-md hover:bg-green-700 transition duration-300 font-medium text-xs">
                             <i class="fas fa-save mr-1"></i>
                             저장
                         </button>
-                        <button type="button" id="clearFormButton" class="bg-gray-300 text-gray-800 py-2 px-3 rounded-md hover:bg-gray-400 transition duration-300 font-medium text-sm">
+                        <button type="button" id="clearFormButton" class="bg-gray-300 text-gray-800 py-2 px-2 rounded-md hover:bg-gray-400 transition duration-300 font-medium text-xs">
                             <i class="fas fa-trash-alt mr-1"></i>
                             초기화
                         </button>
@@ -328,6 +336,7 @@
                             </button>
                         </div>
                     </div>
+
                     
                 </form>
             </div>
@@ -352,9 +361,27 @@
         </div>
     </div>
     <script>
+        // Firebase 설정
+        // Firebase 콘솔(https://console.firebase.google.com)에서 프로젝트를 생성하고
+        // 웹 앱을 추가한 후 아래 설정을 실제 값으로 교체하세요
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",                    // Firebase 프로젝트 설정에서 복사
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",  // 프로젝트 ID로 교체
+            projectId: "YOUR_PROJECT_ID",              // Firebase 프로젝트 ID로 교체
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",   // 프로젝트 ID로 교체
+            messagingSenderId: "YOUR_SENDER_ID",       // 메시징 센더 ID로 교체
+            appId: "YOUR_APP_ID"                       // 앱 ID로 교체
+        };
+
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const settlementsCollection = db.collection('settlements');
+
+        // 기존 변수들
         const formId = 'documentForm'; // 폼 ID
         const localStorageKeyPrefix = 'form_generator_'; // localStorage 키 접두사
-        const settlementListKey = 'settlement_documents_list'; // 정산서 목록 키
+        const settlementListKey = 'settlement_documents_list'; // 정산서 목록 키 (백업용)
         let currentSettlementId = null; // 현재 편집 중인 정산서 ID
         
         // 체크리스트 관리
@@ -463,15 +490,19 @@
         }
         
         // 수동 저장 함수
-        function manualSave() {
+        async function manualSave() {
             try {
-                const settlementId = saveCurrentSettlement();
-                const roomName = document.getElementById('documentTitle').value || '미지정';
-                
-                // 저장 성공 시 시각적 피드백
                 const saveButton = document.getElementById('saveFormButton');
                 const originalText = saveButton.innerHTML;
                 
+                // 저장 중 표시
+                saveButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>저장 중...';
+                saveButton.disabled = true;
+                
+                const settlementId = await saveCurrentSettlement();
+                const roomName = document.getElementById('documentTitle').value || '미지정';
+                
+                // 저장 성공 시 시각적 피드백
                 saveButton.innerHTML = '<i class="fas fa-check mr-2"></i>저장됨';
                 saveButton.classList.remove('bg-green-600', 'hover:bg-green-700');
                 saveButton.classList.add('bg-green-800');
@@ -480,6 +511,7 @@
                     saveButton.innerHTML = originalText;
                     saveButton.classList.remove('bg-green-800');
                     saveButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                    saveButton.disabled = false;
                 }, 2000);
                 
                 // 토스트 메시지 표시 (선택사항)
@@ -488,6 +520,11 @@
             } catch (error) {
                 console.error('저장 중 오류 발생:', error);
                 alert('저장 중 오류가 발생했습니다.');
+                
+                // 에러 시 버튼 복원
+                const saveButton = document.getElementById('saveFormButton');
+                saveButton.innerHTML = '<i class="fas fa-save mr-1"></i>저장';
+                saveButton.disabled = false;
             }
         }
         
@@ -528,21 +565,82 @@
             }, 3000);
         }
         
-        // 정산서 목록 관리 함수들
-        function getSettlementList() {
+        // Firebase 정산서 관리 함수들
+        async function getSettlementList() {
+            try {
+                const snapshot = await settlementsCollection.orderBy('updatedAt', 'desc').get();
+                const settlements = [];
+                snapshot.forEach(doc => {
+                    settlements.push({ id: doc.id, ...doc.data() });
+                });
+                return settlements;
+            } catch (error) {
+                console.error('정산서 목록 가져오기 실패:', error);
+                // 오류 시 localStorage 백업 사용
+                const stored = localStorage.getItem(settlementListKey);
+                return stored ? JSON.parse(stored) : [];
+            }
+        }
+        
+        async function saveSettlementToFirebase(settlementData) {
+            try {
+                if (settlementData.id && settlementData.id.startsWith('settlement_')) {
+                    // 기존 문서 업데이트
+                    await settlementsCollection.doc(settlementData.id).set(settlementData);
+                } else {
+                    // 새 문서 생성
+                    const docRef = await settlementsCollection.add(settlementData);
+                    settlementData.id = docRef.id;
+                }
+                
+                // localStorage에도 백업 저장
+                const list = await getSettlementList();
+                localStorage.setItem(settlementListKey, JSON.stringify(list));
+                
+                return settlementData.id;
+            } catch (error) {
+                console.error('Firebase 저장 실패:', error);
+                // 오류 시 localStorage만 사용
+                return saveSettlementToLocalStorage(settlementData);
+            }
+        }
+        
+        async function deleteSettlementFromFirebase(id) {
+            try {
+                await settlementsCollection.doc(id).delete();
+            } catch (error) {
+                console.error('Firebase 삭제 실패:', error);
+            }
+        }
+        
+        // 백업용 localStorage 함수들
+        function getSettlementListFromLocalStorage() {
             const stored = localStorage.getItem(settlementListKey);
             return stored ? JSON.parse(stored) : [];
         }
         
-        function saveSettlementList(list) {
+        function saveSettlementToLocalStorage(settlementData) {
+            let list = getSettlementListFromLocalStorage();
+            const existingIndex = list.findIndex(item => item.id === settlementData.id);
+            
+            if (existingIndex >= 0) {
+                list[existingIndex] = settlementData;
+            } else {
+                if (!settlementData.id) {
+                    settlementData.id = generateSettlementId();
+                }
+                list.push(settlementData);
+            }
+            
             localStorage.setItem(settlementListKey, JSON.stringify(list));
+            return settlementData.id;
         }
         
         function generateSettlementId() {
             return 'settlement_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
         
-        function saveCurrentSettlement() {
+        async function saveCurrentSettlement() {
             const formData = {};
             const formElements = document.querySelectorAll(`#${formId} input, #${formId} textarea, #${formId} select`);
             formElements.forEach(element => {
@@ -571,73 +669,110 @@
                 formData: formData
             };
             
-            let list = getSettlementList();
-            const existingIndex = list.findIndex(item => item.id === settlementData.id);
-            
-            if (existingIndex >= 0) {
-                // 업데이트
-                settlementData.createdAt = list[existingIndex].createdAt; // 기존 생성일 유지
-                list[existingIndex] = settlementData;
+            // 기존 데이터가 있으면 createdAt 유지
+            if (currentSettlementId) {
+                try {
+                    const snapshot = await settlementsCollection.doc(currentSettlementId).get();
+                    if (snapshot.exists) {
+                        settlementData.createdAt = snapshot.data().createdAt;
+                    }
+                } catch (error) {
+                    console.error('기존 데이터 조회 실패:', error);
+                }
             } else {
-                // 새로 추가
                 settlementData.createdAt = createdAt;
-                list.push(settlementData);
             }
             
-            saveSettlementList(list);
-            currentSettlementId = settlementData.id;
+            const savedId = await saveSettlementToFirebase(settlementData);
+            currentSettlementId = savedId;
             updateSettlementListUI();
             
-            return settlementData.id;
+            return savedId;
         }
         
-        function loadSettlement(id) {
-            const list = getSettlementList();
-            const settlement = list.find(item => item.id === id);
-            
-            if (settlement) {
-                currentSettlementId = id;
-                const formData = settlement.formData;
-                
-                // 체크리스트 항목들 로드
-                if (formData.checklistItems) {
-                    checklistItems = formData.checklistItems;
-                    renderChecklist();
-                }
-                
-                // 폼에 데이터 로드
-                for (const elementId in formData) {
-                    if (elementId === 'checklistItems') continue; // 체크리스트는 별도 처리됨
-                    const element = document.getElementById(elementId);
-                    if (element) {
-                        if (element.type === 'checkbox' || element.type === 'radio') {
-                            element.checked = formData[elementId];
-                        } else {
-                            element.value = formData[elementId];
+        async function loadSettlement(id) {
+            try {
+                const doc = await settlementsCollection.doc(id).get();
+                if (doc.exists) {
+                    const settlement = { id: doc.id, ...doc.data() };
+                    
+                    currentSettlementId = id;
+                    const formData = settlement.formData;
+                    
+                    // 체크리스트 항목들 로드
+                    if (formData.checklistItems) {
+                        checklistItems = formData.checklistItems;
+                        renderChecklist();
+                    }
+                    
+                    // 폼에 데이터 로드
+                    for (const elementId in formData) {
+                        if (elementId === 'checklistItems') continue; // 체크리스트는 별도 처리됨
+                        const element = document.getElementById(elementId);
+                        if (element) {
+                            if (element.type === 'checkbox' || element.type === 'radio') {
+                                element.checked = formData[elementId];
+                            } else {
+                                element.value = formData[elementId];
+                            }
                         }
                     }
+                    
+                    generateDocument();
+                } else {
+                    console.error('정산서를 찾을 수 없습니다:', id);
                 }
-                
-                generateDocument();
+            } catch (error) {
+                console.error('정산서 로드 실패:', error);
+                // 백업으로 localStorage 사용
+                const list = getSettlementListFromLocalStorage();
+                const settlement = list.find(item => item.id === id);
+                if (settlement) {
+                    // localStorage에서 로드하는 기존 로직 실행
+                    const formData = settlement.formData;
+                    currentSettlementId = id;
+                    
+                    if (formData.checklistItems) {
+                        checklistItems = formData.checklistItems;
+                        renderChecklist();
+                    }
+                    
+                    for (const elementId in formData) {
+                        if (elementId === 'checklistItems') continue;
+                        const element = document.getElementById(elementId);
+                        if (element) {
+                            if (element.type === 'checkbox' || element.type === 'radio') {
+                                element.checked = formData[elementId];
+                            } else {
+                                element.value = formData[elementId];
+                            }
+                        }
+                    }
+                    
+                    generateDocument();
+                }
             }
         }
         
-        function deleteSettlement(id) {
+        async function deleteSettlement(id) {
             if (confirm('정말로 이 정산서를 삭제하시겠습니까?')) {
-                let list = getSettlementList();
-                list = list.filter(item => item.id !== id);
-                saveSettlementList(list);
-                
-                if (currentSettlementId === id) {
-                    currentSettlementId = null;
+                try {
+                    await deleteSettlementFromFirebase(id);
+                    
+                    if (currentSettlementId === id) {
+                        currentSettlementId = null;
+                    }
+                    
+                    updateSettlementListUI();
+                } catch (error) {
+                    console.error('정산서 삭제 실패:', error);
+                    alert('정산서 삭제에 실패했습니다. 다시 시도해 주세요.');
                 }
-                
-                updateSettlementListUI();
             }
         }
         
-        function updateSettlementListUI() {
-            const list = getSettlementList();
+        async function updateSettlementListUI() {
+            const list = await getSettlementList();
             const listDiv = document.getElementById('settlementList');
             
             if (list.length === 0) {
@@ -961,6 +1096,7 @@
             const managementRequestDateInput = document.getElementById('managementRequestDate');
             const depositAccountInput = document.getElementById('depositAccount');
             const managementFeeAccountInput = document.getElementById('managementFeeAccount');
+            const memoTextInput = document.getElementById('memoText');
             // 체크리스트 상태 수집
             const checks = {};
             checklistItems.forEach((item, index) => {
@@ -997,6 +1133,7 @@
             else if (isUnpaid) totalRefundWithRent -= dailyRentCalculation;
             const depositAccount = depositAccountInput.value || depositAccountInput.placeholder || '계좌 정보 미입력';
             const managementFeeAccount = managementFeeAccountInput.value || managementFeeAccountInput.placeholder || '계좌 정보 미입력';
+            const memoText = memoTextInput.value || '';
 
             // 체크박스 HTML 생성 함수
             function getChecklistItem(label, isChecked) {
@@ -1091,9 +1228,10 @@
                                 <h3 style="font-weight: 600; color: #374151; font-size: 16px; margin: 0 0 8px 0; display: flex; align-items: center;">
                                     📄 ${documentTitle || '미지정'} 잔금 정산 확인서
                                 </h3>
-                                <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
-                                    <div style="margin-bottom: 2px;">퇴실점검: ${documentVersion ? formatDateTime(documentVersion) : '미정'} | 입주점검: ${releaseDate ? formatDateTime(releaseDate) : '미정'}</div>
-                                    ${managementRequestDate ? `<div style="margin-bottom: 2px;">관리비정산요청일: ${formatDate(managementRequestDate)}</div>` : ''}
+                                <div style="font-size: 12px; margin-top: 4px;">
+                                    <div style="margin-bottom: 2px; color: #dc2626;"><strong>퇴실점검:</strong> ${documentVersion ? formatDateTime(documentVersion) : '미정'}</div>
+                                    <div style="margin-bottom: 2px; color: #dc2626;"><strong>입주점검:</strong> ${releaseDate ? formatDateTime(releaseDate) : '미정'}</div>
+                                    ${managementRequestDate ? `<div style="margin-bottom: 2px; color: #2563eb;"><strong>관리비정산요청일:</strong> ${formatDate(managementRequestDate)}</div>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -1138,6 +1276,12 @@
                         </h4>
                         <div style="font-size: 12px; color: #4b5563;">
                             ${managementFee && parseInt(managementFee) > 0 ? `<span>관리비: ${formatKRW(managementFee)}</span>` : ''}${utilityFee && parseInt(utilityFee) > 0 ? `${managementFee && parseInt(managementFee) > 0 ? '<br>' : ''}<span>공과금: ${formatKRW(utilityFee)}</span>` : ''}
+                            ${managementFee && parseInt(managementFee) > 0 ? `
+                                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #6b7280; line-height: 1.4;">
+                                    본 오피스텔은 전출입 세입자간에 관리비를 승계하는 것을 원칙으로 하고 있습니다. 전입세입자분의 계좌번호가 확인되는데로 보내드리겠습니다. 해당 계좌로 관리비를 입금해 주시면 됩니다.<br>
+                                    <strong style="color: #374151;">관리비승계 계좌번호:</strong>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                     ` : ''}
@@ -1178,6 +1322,18 @@
                                 const textStyle = isChecked ? 'text-decoration: line-through; color: #9ca3af;' : '';
                                 return `<div style="display: flex; align-items: flex-start; margin-bottom: 4px;"><span style="margin-right: 8px;">${icon}</span><span style="${textStyle}">${item}</span></div>`;
                             }).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${memoText ? `
+                    <!-- 메모 카드 -->
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background-color: #f9fafb; margin-bottom: 16px;">
+                        <h4 style="font-weight: 600; color: #374151; font-size: 14px; margin: 0 0 12px 0;">
+                            📝 메모
+                        </h4>
+                        <div style="font-size: 12px; color: #4b5563; white-space: pre-wrap; line-height: 1.6;">
+                            ${memoText}
                         </div>
                     </div>
                     ` : ''}
@@ -1247,20 +1403,61 @@
                 }
             });
             // 폼 제출 시 페이지 새로고침 방지 및 정산서 저장
-            document.getElementById('documentForm').addEventListener('submit', function(e) {
+            document.getElementById('documentForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                // 정산서 저장
-                const settlementId = saveCurrentSettlement();
-                
-                // 문서 생성
-                generateDocument();
-                
-                // 성공 메시지 표시
-                const roomName = document.getElementById('documentTitle').value || '미지정';
-                alert(`${roomName} 정산서가 저장되었습니다.`);
+                try {
+                    // 정산서 저장
+                    const settlementId = await saveCurrentSettlement();
+                    
+                    // 문서 생성
+                    generateDocument();
+                    
+                    // 성공 메시지 표시
+                    const roomName = document.getElementById('documentTitle').value || '미지정';
+                    alert(`${roomName} 정산서가 저장되었습니다.`);
+                } catch (error) {
+                    console.error('폼 제출 중 오류:', error);
+                    alert('정산서 저장 중 오류가 발생했습니다.');
+                }
             });
         });
+
+        // 메모 팝업 관련 함수들
+        function openMemoPopup() {
+            document.getElementById('memoModal').classList.remove('hidden');
+            document.getElementById('memoText').focus();
+        }
+
+        function closeMemoPopup() {
+            document.getElementById('memoModal').classList.add('hidden');
+            generateDocument(); // 메모 변경 후 미리보기 업데이트
+        }
+
+        // 메모 버튼 이벤트 리스너
+        document.getElementById('memoButton').addEventListener('click', openMemoPopup);
     </script>
+
+    <!-- 메모 팝업 모달 -->
+    <div id="memoModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-sticky-note text-purple-500 mr-2"></i>메모
+                    </h3>
+                    <button onclick="closeMemoPopup()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <textarea id="memoText" class="w-full px-3 py-3 border-2 border-purple-400 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-vertical min-h-[150px]" placeholder="메모를 입력하세요..."></textarea>
+                <div class="flex justify-end mt-4 space-x-2">
+                    <button onclick="closeMemoPopup()" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition duration-300">
+                        <i class="fas fa-check mr-1"></i>완료
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
