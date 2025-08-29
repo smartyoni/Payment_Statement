@@ -1098,8 +1098,6 @@
                         <div class="space-y-1 text-xs text-gray-600">
                             ${depositReturn && parseInt(depositReturn) > 0 ? `<div class="flex justify-between"><span>보증금:</span><span>${formatKRW(depositReturn)}</span></div>` : ''}
                             ${longTermRepair && parseInt(longTermRepair) > 0 ? `<div class="flex justify-between"><span>장기수선:</span><span>${formatKRW(longTermRepair)}</span></div>` : ''}
-                            ${managementFee && parseInt(managementFee) > 0 ? `<div class="flex justify-between"><span>관리비:</span><span>${formatKRW(managementFee)}</span></div>` : ''}
-                            ${utilityFee && parseInt(utilityFee) > 0 ? `<div class="flex justify-between"><span>공과금:</span><span>${formatKRW(utilityFee)}</span></div>` : ''}
                             ${(isOverpaid || isUnpaid) && dailyRentCalculation > 0 ? `
                                 <div class="flex justify-between">
                                     <span>월세 ${isOverpaid ? '(과납)' : '(미납)'}:</span>
@@ -1110,8 +1108,31 @@
                                 <span>반환금합계:</span>
                                 <span class="text-blue-600">${formatKRW(totalRefund)}</span>
                             </div>
+                            ${(isOverpaid || isUnpaid) && dailyRentCalculation > 0 ? `
+                                <div class="mt-2 pt-2 border-t border-gray-200">
+                                    <div class="text-xs ${isUnpaid ? 'text-red-600' : 'text-blue-600'} font-medium">
+                                        ${isUnpaid ? 
+                                            `미납월세 ${formatKRW(dailyRentCalculation)}을 임대인에게 납부하셔야 합니다.` :
+                                            `더 납부된 월세 ${formatKRW(dailyRentCalculation)}을 세입자에게 반환하셔야 합니다.`
+                                        }
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
+
+                    ${(managementFee && parseInt(managementFee) > 0) || (utilityFee && parseInt(utilityFee) > 0) ? `
+                    <!-- 관리비/공과금 카드 -->
+                    <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                        <h4 class="font-semibold text-gray-800 text-sm mb-2">
+                            <i class="fas fa-file-invoice-dollar text-gray-500 mr-2"></i>관리비/공과금
+                        </h4>
+                        <div class="space-y-1 text-xs text-gray-600">
+                            ${managementFee && parseInt(managementFee) > 0 ? `<div class="flex justify-between"><span>관리비:</span><span>${formatKRW(managementFee)}</span></div>` : ''}
+                            ${utilityFee && parseInt(utilityFee) > 0 ? `<div class="flex justify-between"><span>공과금:</span><span>${formatKRW(utilityFee)}</span></div>` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
 
                     ${(depositAccount || managementFeeAccount) ? `
                     <!-- 계좌 정보 카드 -->
