@@ -679,24 +679,36 @@
                         
                         // currentSettlementId가 localStorage ID인 경우 Firebase에서 찾기
                         if (currentSettlementId.startsWith('settlement_')) {
-                            // localStorage ID인 경우 Firebase에서 같은 데이터를 찾거나 새로 생성
-                            const existingList = await getSettlementList();
-                            const existingSettlement = existingList.find(item => 
-                                item.roomName === settlementData.roomName && 
-                                item.settlementDate === settlementData.settlementDate &&
-                                !item.id.startsWith('settlement_')  // Firebase ID만
-                            );
+                            console.log('🔄 localStorage ID 처리 중, 현재 정산서 정보:', {
+                                roomName: settlementData.roomName,
+                                settlementDate: settlementData.settlementDate
+                            });
                             
-                            if (existingSettlement) {
-                                // Firebase에서 기존 문서 업데이트
-                                await settlementsCollection.doc(existingSettlement.id).set(settlementData);
-                                savedId = existingSettlement.id;
-                                currentSettlementId = existingSettlement.id; // Firebase ID로 갱신
-                            } else {
-                                // 새 문서 생성
-                                const docRef = await settlementsCollection.add(settlementData);
-                                savedId = docRef.id;
-                                currentSettlementId = savedId; // Firebase ID로 갱신
+                            // localStorage에서 불러온 정산서는 localStorage에서 직접 업데이트
+                            settlementData.id = currentSettlementId;
+                            saveSettlementToLocalStorage(settlementData);
+                            savedId = currentSettlementId;
+                            
+                            // Firebase에도 동일한 데이터가 있는지 확인하고 있으면 업데이트, 없으면 무시
+                            try {
+                                const snapshot = await settlementsCollection
+                                    .where('roomName', '==', settlementData.roomName)
+                                    .where('settlementDate', '==', settlementData.settlementDate)
+                                    .get();
+                                
+                                if (!snapshot.empty) {
+                                    // 기존 Firebase 문서가 있으면 업데이트
+                                    const firebaseDoc = snapshot.docs[0];
+                                    await settlementsCollection.doc(firebaseDoc.id).set({
+                                        ...settlementData,
+                                        id: firebaseDoc.id // Firebase ID 유지
+                                    });
+                                    console.log('🔄 Firebase 문서도 업데이트:', firebaseDoc.id);
+                                } else {
+                                    console.log('🔄 Firebase에 해당 문서 없음, localStorage만 업데이트');
+                                }
+                            } catch (error) {
+                                console.log('Firebase 동기화 실패, localStorage만 업데이트:', error);
                             }
                         } else {
                             // 이미 Firebase ID인 경우 직접 업데이트
@@ -710,9 +722,12 @@
                         savedId = docRef.id;
                     }
                     
-                    // Firebase 저장 성공시 localStorage에도 백업
-                    settlementData.id = savedId;
-                    saveSettlementToLocalStorage(settlementData);
+                    // localStorage ID 업데이트의 경우에는 이미 localStorage 저장이 완료됨
+                    if (!currentSettlementId || !currentSettlementId.startsWith('settlement_')) {
+                        // Firebase 저장 성공시 localStorage에도 백업 (localStorage ID가 아닌 경우만)
+                        settlementData.id = savedId;
+                        saveSettlementToLocalStorage(settlementData);
+                    }
                     
                     console.log('💾 Firebase와 localStorage에 저장 완료, ID:', savedId);
                     return savedId;
