@@ -187,6 +187,12 @@
         
         /* 모바일 탭 네비게이션 스타일 */
         @media (max-width: 1279px) {
+            /* 모바일에서 컨테이너 패딩 최적화 */
+            .container {
+                padding-top: 1rem !important;
+                padding-bottom: 5rem !important; /* 하단 탭바 공간 확보 */
+            }
+            
             .mobile-section {
                 display: none;
             }
@@ -243,7 +249,7 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="container mx-auto px-4 py-8">
-        <div class="text-center mb-8 no-print">
+        <div class="text-center mb-8 no-print xl:block hidden">
             <h1 class="text-4xl font-bold text-gray-800 mb-2">
                 <i class="fas fa-file-alt text-blue-600 mr-3"></i> 잔금일 정산내역
             </h1>
@@ -260,6 +266,19 @@
                 <button id="mobileTestBtn" onclick="toggleMobileView()" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 transition-colors">
                     📱 모바일 뷰 테스트
                 </button>
+            </div>
+        </div>
+        
+        <!-- 모바일 전용 간소화된 헤더 -->
+        <div class="xl:hidden mb-4 no-print">
+            <div class="flex items-center justify-between">
+                <h1 class="text-xl font-bold text-gray-800">
+                    <i class="fas fa-file-alt text-blue-600 mr-2"></i> 잔금정산서
+                </h1>
+                <!-- Firebase 연결 상태 (모바일용 아이콘만) -->
+                <div id="mobileFirebaseStatus" class="text-xs">
+                    <i class="fas fa-spinner fa-spin text-gray-500"></i>
+                </div>
             </div>
         </div>
         
@@ -281,8 +300,6 @@
             </div>
         </div>
         
-        <!-- 모바일용 패딩 (하단 탭 공간 확보) -->
-        <div class="xl:hidden h-16"></div>
         
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-4" id="mainContent">
             <div id="listSection" class="xl:col-span-4 bg-white rounded-lg border-2 border-black p-6 no-print mobile-section mobile-active">
@@ -1438,6 +1455,7 @@
         // Firebase 연결 테스트 함수
         async function testFirebaseConnection() {
             const statusDiv = document.getElementById('firebaseStatus');
+            const mobileStatusDiv = document.getElementById('mobileFirebaseStatus');
             
             if (useFirebase) {
                 try {
@@ -1455,10 +1473,16 @@
                     console.log('✅ Firebase 연결 및 읽기/쓰기 테스트 성공!');
                     console.log('🌐 클라우드 데이터베이스가 정상적으로 작동합니다.');
                     
-                    // UI 상태 업데이트
+                    // 데스크톱 UI 상태 업데이트
                     if (statusDiv) {
                         statusDiv.className = 'mt-3 text-sm font-medium px-3 py-1 rounded-full inline-flex items-center bg-green-100 text-green-800';
                         statusDiv.innerHTML = '<i class="fas fa-cloud mr-2"></i><span>클라우드 데이터베이스 연결됨 - 어디서나 접근 가능</span>';
+                    }
+                    
+                    // 모바일 UI 상태 업데이트
+                    if (mobileStatusDiv) {
+                        mobileStatusDiv.innerHTML = '<i class="fas fa-cloud text-green-600"></i>';
+                        mobileStatusDiv.title = '클라우드 DB 연결됨';
                     }
                     
                     return true;
@@ -1466,10 +1490,16 @@
                     console.log('❌ Firebase 연결 테스트 실패:', error);
                     console.log('💾 localStorage만 사용됩니다.');
                     
-                    // UI 상태 업데이트
+                    // 데스크톱 UI 상태 업데이트
                     if (statusDiv) {
                         statusDiv.className = 'mt-3 text-sm font-medium px-3 py-1 rounded-full inline-flex items-center bg-yellow-100 text-yellow-800';
                         statusDiv.innerHTML = '<i class="fas fa-database mr-2"></i><span>로컬 저장소 사용 중 - 이 브라우저에서만 접근</span>';
+                    }
+                    
+                    // 모바일 UI 상태 업데이트
+                    if (mobileStatusDiv) {
+                        mobileStatusDiv.innerHTML = '<i class="fas fa-database text-yellow-600"></i>';
+                        mobileStatusDiv.title = '로컬 저장소만 사용';
                     }
                     
                     return false;
@@ -1477,10 +1507,16 @@
             } else {
                 console.log('💾 Firebase가 비활성화되어 localStorage만 사용됩니다.');
                 
-                // UI 상태 업데이트
+                // 데스크톱 UI 상태 업데이트
                 if (statusDiv) {
                     statusDiv.className = 'mt-3 text-sm font-medium px-3 py-1 rounded-full inline-flex items-center bg-gray-100 text-gray-800';
                     statusDiv.innerHTML = '<i class="fas fa-database mr-2"></i><span>로컬 저장소만 사용</span>';
+                }
+                
+                // 모바일 UI 상태 업데이트
+                if (mobileStatusDiv) {
+                    mobileStatusDiv.innerHTML = '<i class="fas fa-database text-gray-600"></i>';
+                    mobileStatusDiv.title = '로컬 저장소만 사용';
                 }
                 
                 return false;
