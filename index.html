@@ -869,11 +869,16 @@
         }
         
         async function deleteSettlement(id) {
+            console.log('🗑️ 삭제 요청 - ID:', id);
+            
             if (confirm('정말로 이 정산서를 삭제하시겠습니까?')) {
                 try {
+                    console.log('🗑️ 삭제 확인됨, 삭제 시작');
+                    
                     // Firebase에서 삭제 시도
                     if (useFirebase) {
                         try {
+                            console.log('🗑️ Firebase에서 삭제 시도:', id);
                             await settlementsCollection.doc(id).delete();
                             console.log('🗑️ Firebase에서 삭제 완료');
                         } catch (error) {
@@ -882,26 +887,38 @@
                     }
                     
                     // localStorage에서도 삭제
+                    console.log('🗑️ localStorage에서 삭제 시도');
                     let list = getSettlementListFromLocalStorage();
+                    console.log('🗑️ 삭제 전 목록 개수:', list.length);
                     list = list.filter(item => item.id !== id);
+                    console.log('🗑️ 삭제 후 목록 개수:', list.length);
                     localStorage.setItem(settlementListKey, JSON.stringify(list));
                     
                     if (currentSettlementId === id) {
+                        console.log('🗑️ 현재 편집 중인 정산서 삭제됨, 폼 초기화');
                         currentSettlementId = null;
                         clearForm(); // 현재 편집 중이던 정산서를 삭제했다면 폼도 초기화
                     }
                     
+                    console.log('🗑️ UI 업데이트 시작');
                     await updateSettlementListUI();
                     console.log('🗑️ 정산서 삭제 완료');
+                    
+                    // 삭제 성공 메시지
+                    alert('정산서가 삭제되었습니다.');
                 } catch (error) {
                     console.error('정산서 삭제 중 오류:', error);
-                    alert('정산서 삭제 중 오류가 발생했습니다.');
+                    alert('정산서 삭제 중 오류가 발생했습니다: ' + error.message);
                 }
+            } else {
+                console.log('🗑️ 삭제 취소됨');
             }
         }
         
         async function updateSettlementListUI() {
+            console.log('🔄 목록 UI 업데이트 시작');
             const list = await getSettlementList();
+            console.log('🔄 불러온 목록 개수:', list.length);
             const listDiv = document.getElementById('settlementList');
             
             if (list.length === 0) {
