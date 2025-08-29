@@ -672,12 +672,40 @@
             if (useFirebase) {
                 try {
                     let savedId;
-                    if (settlementData.id && !settlementData.id.startsWith('settlement_')) {
-                        // Firebase ID (기존 문서 업데이트)
-                        await settlementsCollection.doc(settlementData.id).set(settlementData);
-                        savedId = settlementData.id;
+                    
+                    // 기존 문서 업데이트 여부 판단 - currentSettlementId가 있으면 업데이트
+                    if (currentSettlementId) {
+                        console.log('🔄 기존 정산서 업데이트:', currentSettlementId);
+                        
+                        // currentSettlementId가 localStorage ID인 경우 Firebase에서 찾기
+                        if (currentSettlementId.startsWith('settlement_')) {
+                            // localStorage ID인 경우 Firebase에서 같은 데이터를 찾거나 새로 생성
+                            const existingList = await getSettlementList();
+                            const existingSettlement = existingList.find(item => 
+                                item.roomName === settlementData.roomName && 
+                                item.settlementDate === settlementData.settlementDate &&
+                                !item.id.startsWith('settlement_')  // Firebase ID만
+                            );
+                            
+                            if (existingSettlement) {
+                                // Firebase에서 기존 문서 업데이트
+                                await settlementsCollection.doc(existingSettlement.id).set(settlementData);
+                                savedId = existingSettlement.id;
+                                currentSettlementId = existingSettlement.id; // Firebase ID로 갱신
+                            } else {
+                                // 새 문서 생성
+                                const docRef = await settlementsCollection.add(settlementData);
+                                savedId = docRef.id;
+                                currentSettlementId = savedId; // Firebase ID로 갱신
+                            }
+                        } else {
+                            // 이미 Firebase ID인 경우 직접 업데이트
+                            await settlementsCollection.doc(currentSettlementId).set(settlementData);
+                            savedId = currentSettlementId;
+                        }
                     } else {
                         // 새 문서 생성
+                        console.log('✨ 새 정산서 생성');
                         const docRef = await settlementsCollection.add(settlementData);
                         savedId = docRef.id;
                     }
@@ -686,7 +714,7 @@
                     settlementData.id = savedId;
                     saveSettlementToLocalStorage(settlementData);
                     
-                    console.log('💾 Firebase와 localStorage에 저장 완료');
+                    console.log('💾 Firebase와 localStorage에 저장 완료, ID:', savedId);
                     return savedId;
                 } catch (error) {
                     console.log('Firebase 저장 실패, localStorage로 대체:', error);
@@ -727,6 +755,8 @@
         }
         
         async function saveCurrentSettlement() {
+            console.log('💾 저장 시작 - currentSettlementId:', currentSettlementId);
+            
             const formData = {};
             const formElements = document.querySelectorAll(`#${formId} input, #${formId} textarea, #${formId} select`);
             formElements.forEach(element => {
@@ -754,6 +784,12 @@
                 updatedAt: createdAt,
                 formData: formData
             };
+            
+            console.log('💾 저장할 데이터:', {
+                isUpdate: !!currentSettlementId,
+                id: settlementData.id,
+                roomName: settlementData.roomName
+            });
             
             // 기존 데이터가 있으면 createdAt 유지
             if (currentSettlementId) {
@@ -783,12 +819,15 @@
         
         async function loadSettlement(id) {
             try {
+                console.log('📁 정산서 불러오기 시작 - ID:', id);
+                
                 // 하이브리드 방식으로 정산서 목록에서 찾기
                 const list = await getSettlementList();
                 const settlement = list.find(item => item.id === id);
                 
                 if (settlement) {
                     currentSettlementId = id;
+                    console.log('📁 currentSettlementId 설정:', currentSettlementId);
                     const formData = settlement.formData;
                     
                     // 체크리스트 항목들 로드
@@ -1581,8 +1620,10 @@
             document.getElementById('moveOutDate').addEventListener('change', calculateDateDifference);
             
             document.getElementById('clearFormButton').addEventListener('click', function() {
+                console.log('🗑️ 양식 초기화 - 이전 currentSettlementId:', currentSettlementId);
                 clearForm();
                 currentSettlementId = null; // 현재 편집 중인 정산서 ID 초기화
+                console.log('🗑️ 양식 초기화 완료 - 새로운 currentSettlementId:', currentSettlementId);
                 updateSettlementListUI(); // 목록 UI 업데이트
             }); // 양식 초기화 버튼
             
