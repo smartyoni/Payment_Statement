@@ -34,7 +34,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 은은한 그림자 */
         }
         .input-group {
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
         .section-divider {
             border-top: 2px solid #e5e7eb;
@@ -206,10 +206,26 @@
             </div>
             
             <div class="xl:col-span-4 bg-white rounded-lg border-2 border-black p-6 no-print">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">
-                    <i class="fas fa-edit text-blue-500 mr-2"></i>
-                    정보 입력
-                </h2>
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-edit text-blue-500 mr-2"></i>
+                        정보 입력
+                    </h2>
+                    <div class="flex space-x-1">
+                        <button type="submit" form="documentForm" class="bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition duration-300 font-medium text-sm">
+                            <i class="fas fa-magic mr-1"></i>
+                            생성
+                        </button>
+                        <button type="button" id="saveFormButton" class="bg-green-600 text-white py-2 px-3 rounded-md hover:bg-green-700 transition duration-300 font-medium text-sm">
+                            <i class="fas fa-save mr-1"></i>
+                            저장
+                        </button>
+                        <button type="button" id="clearFormButton" class="bg-gray-300 text-gray-800 py-2 px-3 rounded-md hover:bg-gray-400 transition duration-300 font-medium text-sm">
+                            <i class="fas fa-trash-alt mr-1"></i>
+                            초기화
+                        </button>
+                    </div>
+                </div>
                 <form id="documentForm" class="space-y-6">
                     <div class="border-b border-gray-200 pb-6">
                         <h3 class="text-lg font-semibold text-gray-700 mb-4 section-heading">
@@ -217,32 +233,32 @@
                         </h3>
                         
                         <div class="input-group flex items-center mb-4">
+                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="documentTitle">호실명*</label>
+                            <input type="text" id="documentTitle" required class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="input-group flex items-center mb-4">
                             <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="settlementDate">잔금일</label>
                             <input type="date" id="settlementDate" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="input-group flex items-center mb-4">
-                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="documentTitle">호실명*</label>
-                            <input type="text" id="documentTitle" required class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 101호, A동 201호">
+                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="managementRequestDate">관리비정산요청일</label>
+                            <input type="date" id="managementRequestDate" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="input-group flex items-center mb-4">
                             <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="documentVersion">퇴실점검일정</label>
-                            <input type="text" id="documentVersion" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 2024년 12월 30일 14:00">
+                            <input type="datetime-local" id="documentVersion" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="input-group flex items-center mb-4">
                             <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="releaseDate">입주점검일정</label>
-                            <input type="text" id="releaseDate" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 2024년 12월 31일 10:00">
+                            <input type="datetime-local" id="releaseDate" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <div class="input-group flex items-center mb-4">
-                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="depositAccount">보증금반환계좌</label>
-                            <input type="text" id="depositAccount" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: KB국민은행 123456-01-789012 (예금주: 이영희)">
+                        <div class="input-group mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2" for="depositAccount">보증금반환계좌</label>
+                            <textarea id="depositAccount" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"></textarea>
                         </div>
-                        <div class="input-group flex items-center mb-4">
-                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="managementFeeAccount">관리비승계계좌</label>
-                            <input type="text" id="managementFeeAccount" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 우리은행 111-222222-33-444 (예금주: XYZ관리사무소)">
-                        </div>
-                        <div class="input-group flex items-center mb-4">
-                            <label class="text-sm font-medium text-gray-700 w-32 mr-4" for="managementRequestDate">관리비정산요청일</label>
-                            <input type="date" id="managementRequestDate" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <div class="input-group mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2" for="managementFeeAccount">관리비승계계좌</label>
+                            <textarea id="managementFeeAccount" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-vertical"></textarea>
                         </div>
                     </div>
 
@@ -253,27 +269,27 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="depositReturn">보증금 반환금</label>
-                                <input type="number" id="depositReturn" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 50000000">
+                                <input type="number" id="depositReturn" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="longTermRepair">장기수선충당금</label>
-                                <input type="number" id="longTermRepair" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 150000">
+                                <input type="number" id="longTermRepair" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="managementFee">관리비</label>
-                                <input type="number" id="managementFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 150000">
+                                <input type="number" id="managementFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="utilityFee">공과금</label>
-                                <input type="number" id="utilityFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 85000">
+                                <input type="number" id="utilityFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="monthlyRent">월세</label>
-                                <input type="number" id="monthlyRent" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 600000">
+                                <input type="number" id="monthlyRent" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                             <div class="input-group">
                                 <label class="block text-sm font-medium text-gray-700 mb-2" for="rentDays">일수 (자동계산)</label>
-                                <input type="number" id="rentDays" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100" placeholder="자동계산됨" readonly>
+                                <input type="number" id="rentDays" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100" readonly>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4 mt-4">
@@ -306,23 +322,13 @@
                             <!-- 동적으로 생성되는 체크리스트 항목들 -->
                         </div>
                         <div class="mt-4 flex space-x-2">
-                            <input type="text" id="newChecklistItem" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="새 체크리스트 항목을 입력하세요">
+                            <input type="text" id="newChecklistItem" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <button type="button" onclick="addChecklistItem()" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition duration-300">
                                 <i class="fas fa-plus mr-1"></i>추가
                             </button>
                         </div>
                     </div>
                     
-                    <div class="flex space-x-3">
-                        <button type="submit" class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition duration-300 font-semibold">
-                            <i class="fas fa-magic mr-2"></i>
-                            정산서 생성하기
-                        </button>
-                        <button type="button" id="clearFormButton" class="flex-1 bg-gray-300 text-gray-800 py-3 px-6 rounded-md hover:bg-gray-400 transition duration-300 font-semibold">
-                            <i class="fas fa-trash-alt mr-2"></i>
-                            양식 초기화
-                        </button>
-                    </div>
                 </form>
             </div>
             <div class="xl:col-span-4 bg-white rounded-lg border-2 border-black p-8">
@@ -405,6 +411,72 @@
                     addChecklistItem();
                 }
             });
+        }
+        
+        // 수동 저장 함수
+        function manualSave() {
+            try {
+                const settlementId = saveCurrentSettlement();
+                const roomName = document.getElementById('documentTitle').value || '미지정';
+                
+                // 저장 성공 시 시각적 피드백
+                const saveButton = document.getElementById('saveFormButton');
+                const originalText = saveButton.innerHTML;
+                
+                saveButton.innerHTML = '<i class="fas fa-check mr-2"></i>저장됨';
+                saveButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                saveButton.classList.add('bg-green-800');
+                
+                setTimeout(() => {
+                    saveButton.innerHTML = originalText;
+                    saveButton.classList.remove('bg-green-800');
+                    saveButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                }, 2000);
+                
+                // 토스트 메시지 표시 (선택사항)
+                showSaveNotification(`${roomName} 정산서가 저장되었습니다.`);
+                
+            } catch (error) {
+                console.error('저장 중 오류 발생:', error);
+                alert('저장 중 오류가 발생했습니다.');
+            }
+        }
+        
+        // 저장 알림 토스트 함수
+        function showSaveNotification(message) {
+            // 기존 알림이 있다면 제거
+            const existingNotification = document.getElementById('saveNotification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // 토스트 알림 생성
+            const notification = document.createElement('div');
+            notification.id = 'saveNotification';
+            notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg z-50 transform transition-all duration-300 translate-x-full';
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // 애니메이션으로 표시
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // 3초 후 자동 제거
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 3000);
         }
         
         // 정산서 목록 관리 함수들
@@ -1092,6 +1164,19 @@
                 currentSettlementId = null; // 현재 편집 중인 정산서 ID 초기화
                 updateSettlementListUI(); // 목록 UI 업데이트
             }); // 양식 초기화 버튼
+            
+            // 저장 버튼 이벤트 리스너
+            document.getElementById('saveFormButton').addEventListener('click', function() {
+                manualSave();
+            });
+            
+            // Ctrl+S 단축키 이벤트 리스너
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault(); // 브라우저 기본 저장 동작 방지
+                    manualSave();
+                }
+            });
             // 폼 제출 시 페이지 새로고침 방지 및 정산서 저장
             document.getElementById('documentForm').addEventListener('submit', function(e) {
                 e.preventDefault();
