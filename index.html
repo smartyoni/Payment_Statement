@@ -214,10 +214,6 @@
                         정보 입력
                     </h2>
                     <div class="flex space-x-1">
-                        <button type="button" id="memoButton" class="bg-purple-500 text-white py-2 px-2 rounded-md hover:bg-purple-600 transition duration-300 font-medium text-xs">
-                            <i class="fas fa-sticky-note mr-1"></i>
-                            메모
-                        </button>
                         <button type="submit" form="documentForm" class="bg-green-600 text-white py-2 px-2 rounded-md hover:bg-green-700 transition duration-300 font-medium text-xs">
                             <i class="fas fa-save mr-1"></i>
                             저장
@@ -331,6 +327,12 @@
                         </div>
                     </div>
 
+                    <div class="pb-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 section-heading">
+                            <i class="fas fa-sticky-note"></i> 메모
+                        </h3>
+                        <textarea id="memoText" class="w-full px-3 py-3 border-2 border-purple-400 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-vertical min-h-[100px]" placeholder="메모를 입력하세요..."></textarea>
+                    </div>
                     
                 </form>
             </div>
@@ -1205,12 +1207,11 @@
                     ${memoText ? `
                     <!-- 메모 카드 -->
                     <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background-color: #f9fafb; margin-bottom: 16px;">
-                        <h4 style="font-weight: 600; color: #374151; font-size: 14px; margin: 0 0 12px 0;">
-                            📝 메모
+                        <h4 style="font-weight: 600; color: #374151; font-size: 14px; margin: 0 0 8px 0; display: flex; align-items: center;">
+                            <span style="margin-right: 8px;">📝</span>
+                            <span>메모</span>
                         </h4>
-                        <div style="font-size: 12px; color: #4b5563; white-space: pre-wrap; line-height: 1.6;">
-                            ${memoText}
-                        </div>
+                        <div style="font-size: 12px; color: #4b5563; white-space: pre-wrap; line-height: 1.6; text-align: left; vertical-align: top; word-wrap: break-word; margin-left: 0; padding-left: 0;">${memoText}</div>
                     </div>
                     ` : ''}
                 </div>
@@ -1294,41 +1295,7 @@
             });
         });
 
-        // 메모 팝업 관련 함수들
-        function openMemoPopup() {
-            document.getElementById('memoModal').classList.remove('hidden');
-            document.getElementById('memoText').focus();
-        }
-
-        function closeMemoPopup() {
-            document.getElementById('memoModal').classList.add('hidden');
-            generateDocument(); // 메모 변경 후 미리보기 업데이트
-        }
-
-        // 메모 버튼 이벤트 리스너
-        document.getElementById('memoButton').addEventListener('click', openMemoPopup);
     </script>
 
-    <!-- 메모 팝업 모달 -->
-    <div id="memoModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">
-                        <i class="fas fa-sticky-note text-purple-500 mr-2"></i>메모
-                    </h3>
-                    <button onclick="closeMemoPopup()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <textarea id="memoText" class="w-full px-3 py-3 border-2 border-purple-400 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-vertical min-h-[150px]" placeholder="메모를 입력하세요..."></textarea>
-                <div class="flex justify-end mt-4 space-x-2">
-                    <button onclick="closeMemoPopup()" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition duration-300">
-                        <i class="fas fa-check mr-1"></i>완료
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
