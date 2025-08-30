@@ -591,6 +591,7 @@
             });
         }
         
+        
         // 숫자 포맷팅 함수 (쉼표 추가)
         function formatNumberInput(value) {
             // 숫자가 아닌 문자 제거
@@ -825,6 +826,16 @@
             // 체크리스트 항목들도 저장
             formData.checklistItems = checklistItems;
             
+            // 체크리스트 상태도 저장
+            const checkStates = {};
+            checklistItems.forEach((item, index) => {
+                const checkbox = document.getElementById(`check${index + 1}`);
+                if (checkbox) {
+                    checkStates[`check${index + 1}`] = checkbox.checked;
+                }
+            });
+            formData.checklistStates = checkStates;
+            
             const roomName = document.getElementById('documentTitle').value || '미지정';
             const settlementDate = document.getElementById('settlementDate').value;
             const createdAt = new Date().toISOString();
@@ -887,11 +898,23 @@
                     if (formData.checklistItems) {
                         checklistItems = formData.checklistItems;
                         renderChecklist();
+                        
+                        // 체크리스트 상태도 복원
+                        if (formData.checklistStates) {
+                            setTimeout(() => {
+                                Object.keys(formData.checklistStates).forEach(checkId => {
+                                    const checkbox = document.getElementById(checkId);
+                                    if (checkbox) {
+                                        checkbox.checked = formData.checklistStates[checkId];
+                                    }
+                                });
+                            }, 100);
+                        }
                     }
                     
                     // 폼에 데이터 로드
                     for (const elementId in formData) {
-                        if (elementId === 'checklistItems') continue; // 체크리스트는 별도 처리됨
+                        if (elementId === 'checklistItems' || elementId === 'checklistStates') continue; // 체크리스트는 별도 처리됨
                         const element = document.getElementById(elementId);
                         if (element) {
                             if (element.type === 'checkbox' || element.type === 'radio') {
@@ -1179,6 +1202,16 @@
             
             // 체크리스트 항목들도 저장
             formData.checklistItems = checklistItems;
+            
+            // 체크리스트 상태도 저장
+            const checkStates = {};
+            checklistItems.forEach((item, index) => {
+                const checkbox = document.getElementById(`check${index + 1}`);
+                if (checkbox) {
+                    checkStates[`check${index + 1}`] = checkbox.checked;
+                }
+            });
+            formData.checklistStates = checkStates;
             localStorage.setItem(localStorageKeyPrefix + formId, JSON.stringify(formData));
             // console.log('Form data saved to localStorage');
         }
@@ -1192,10 +1225,22 @@
                 if (formData.checklistItems) {
                     checklistItems = formData.checklistItems;
                     renderChecklist();
+                    
+                    // 체크리스트 상태도 복원
+                    if (formData.checklistStates) {
+                        setTimeout(() => {
+                            Object.keys(formData.checklistStates).forEach(checkId => {
+                                const checkbox = document.getElementById(checkId);
+                                if (checkbox) {
+                                    checkbox.checked = formData.checklistStates[checkId];
+                                }
+                            });
+                        }, 100);
+                    }
                 }
                 
                 for (const id in formData) {
-                    if (id === 'checklistItems') continue; // 체크리스트는 별도 처리
+                    if (id === 'checklistItems' || id === 'checklistStates') continue; // 체크리스트는 별도 처리
                     const element = document.getElementById(id);
                     if (element) {
                         if (element.type === 'checkbox') {

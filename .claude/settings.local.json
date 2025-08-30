@@ -6,7 +6,11 @@
       "Bash(git pull:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(node:*)",
+      "Bash(dir)",
+      "Bash(start index.html)",
+      "Bash(npx serve:*)"
     ],
     "deny": [],
     "ask": []
