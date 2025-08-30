@@ -563,9 +563,29 @@
             const input = document.getElementById('newChecklistItem');
             const newItem = input.value.trim();
             if (newItem) {
+                // 현재 체크 상태 저장
+                const currentCheckStates = {};
+                checklistItems.forEach((item, index) => {
+                    const checkbox = document.getElementById(`check${index + 1}`);
+                    if (checkbox) {
+                        currentCheckStates[index] = checkbox.checked;
+                    }
+                });
+                
                 checklistItems.push(newItem);
                 input.value = '';
                 renderChecklist();
+                
+                // 이전 체크 상태 복원
+                setTimeout(() => {
+                    Object.keys(currentCheckStates).forEach(index => {
+                        const checkbox = document.getElementById(`check${parseInt(index) + 1}`);
+                        if (checkbox) {
+                            checkbox.checked = currentCheckStates[index];
+                        }
+                    });
+                }, 50);
+                
                 saveFormDataToLocalStorage();
                 generateDocument();
             }
@@ -574,8 +594,31 @@
         // 체크리스트 항목 삭제
         function removeChecklistItem(index) {
             if (confirm('이 항목을 삭제하시겠습니까?')) {
+                // 현재 체크 상태 저장 (삭제될 항목 제외)
+                const currentCheckStates = {};
+                checklistItems.forEach((item, i) => {
+                    if (i !== index) { // 삭제될 항목 제외
+                        const checkbox = document.getElementById(`check${i + 1}`);
+                        if (checkbox) {
+                            const newIndex = i > index ? i - 1 : i; // 삭제 후 인덱스 조정
+                            currentCheckStates[newIndex] = checkbox.checked;
+                        }
+                    }
+                });
+                
                 checklistItems.splice(index, 1);
                 renderChecklist();
+                
+                // 이전 체크 상태 복원
+                setTimeout(() => {
+                    Object.keys(currentCheckStates).forEach(newIndex => {
+                        const checkbox = document.getElementById(`check${parseInt(newIndex) + 1}`);
+                        if (checkbox) {
+                            checkbox.checked = currentCheckStates[newIndex];
+                        }
+                    });
+                }, 50);
+                
                 saveFormDataToLocalStorage();
                 generateDocument();
             }
