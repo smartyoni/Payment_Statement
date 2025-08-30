@@ -107,6 +107,17 @@
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
+            #previewSection { 
+                display: block !important; 
+                position: relative !important;
+                transform: none !important;
+                opacity: 1 !important;
+            }
+            #documentPreview { display: block !important; }
+            .document-output { display: block !important; }
+            .mobile-section { display: block !important; }
+            #listSection, #inputSection { display: none !important; }
+            #previewSection.mobile-section { display: block !important; }
             body {
                 -webkit-print-color-adjust: exact; /* Chrome, Safari */
                 print-color-adjust: exact; /* 표준 */
@@ -468,11 +479,11 @@
                     </div>
 
                     <div class="pb-6">
-                        <div class="flex justify-between items-center mb-4">
+                        <div class="flex justify-between items-baseline mb-4">
                             <h3 class="text-lg font-semibold text-gray-700 section-heading">
                                 <i class="fas fa-check-circle"></i> 잔금일 체크리스트
                             </h3>
-                            <button type="button" onclick="uncheckAllChecklist()" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-md border transition-colors flex items-center">
+                            <button type="button" onclick="uncheckAllChecklist()" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md transition-colors flex items-center">
                                 <i class="fas fa-times-circle mr-1"></i>
                                 체크해제
                             </button>
@@ -552,12 +563,22 @@
         
         // 체크리스트 관리
         let checklistItems = [
-            '은행대출금 및 남은 잔금, 월세 입금 확인',
-            '퇴실 세입자 관리비 납부 확인',
-            '퇴실 세입자 인터넷, 도시가스 등 공과금 납부 확인',
-            '관리비 승계 여부 확인',
-            '보증금 반환 후 공동현관/호실 비밀번호 확인'
+            '준비: 잔금일발행등기, 잔금영수증',
+            '관리비정산서 팩스 받기',
+            '비용정산서 완성본 만들기',
+            '퇴실세입자: 비용정산서, 관리비, 장충금사진 보내기',
+            '임대인에게 비용정산서, 장충금사진 보내기',
+            '은행대출금 입금확인',
+            '남은 잔금 입금확인',
+            '퇴실점검진행',
+            '입주점검진행',
+            '관리비승계여부확인',
+            '미납월세 입금확인',
+            '보증금반환 확인',
+            '중개보수 입금확인'
         ];
+        let checkOrder = {}; // 체크 순서를 추적하는 객체 {항목인덱스: 체크순서}
+        let nextCheckOrder = 1; // 다음 체크 순서 번호
         
         // 체크리스트 렌더링 함수
         function renderChecklist() {
@@ -573,7 +594,7 @@
                     <div class="flex items-center mr-2 text-gray-400 h-5">
                         <i class="fas fa-grip-vertical text-sm"></i>
                     </div>
-                    <input type="checkbox" id="check${index + 1}" class="mr-2 accent-color-checkbox" onchange="saveFormDataToLocalStorage(); generateDocument();">
+                    <input type="checkbox" id="check${index + 1}" class="mr-2 accent-color-checkbox" onchange="handleCheckboxChange(${index}); saveFormDataToLocalStorage(); generateDocument();">
                     <label for="check${index + 1}" class="text-gray-700 flex-1 leading-5">${index + 1}. ${item}</label>
                     <button type="button" onclick="removeChecklistItem(${index})" class="ml-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center h-5">
                         <i class="fas fa-trash-alt text-sm"></i>
@@ -754,6 +775,79 @@
             draggedIndex = null;
         }
         
+        // 체크박스 변경 핸들러
+        function handleCheckboxChange(itemIndex) {
+            const checkbox = document.getElementById(`check${itemIndex + 1}`);
+            const originalIndex = itemIndex; // 현재 배열에서의 인덱스
+            
+            if (checkbox.checked) {
+                // 체크된 경우: 체크 순서 기록
+                checkOrder[originalIndex] = nextCheckOrder++;
+            } else {
+                // 체크 해제된 경우: 체크 순서에서 제거
+                delete checkOrder[originalIndex];
+            }
+            
+            // 자동 정렬 실행
+            sortChecklistItems();
+        }
+        
+        // 체크리스트 자동 정렬 함수
+        function sortChecklistItems() {
+            // 현재 체크 상태 수집
+            const currentStates = {};
+            checklistItems.forEach((item, index) => {
+                const checkbox = document.getElementById(`check${index + 1}`);
+                currentStates[item] = checkbox ? checkbox.checked : false;
+            });
+            
+            // 체크되지 않은 항목들과 체크된 항목들을 분리
+            const uncheckedItems = [];
+            const checkedItems = [];
+            
+            checklistItems.forEach((item, index) => {
+                if (currentStates[item]) {
+                    checkedItems.push({
+                        item: item,
+                        originalIndex: index,
+                        checkOrder: checkOrder[index] || 999999
+                    });
+                } else {
+                    uncheckedItems.push(item);
+                }
+            });
+            
+            // 체크된 항목들을 체크 순서대로 정렬
+            checkedItems.sort((a, b) => a.checkOrder - b.checkOrder);
+            
+            // 새로운 배열 순서 생성: 체크 안된 항목 + 체크된 항목 (체크 순서대로)
+            const newChecklistItems = [...uncheckedItems, ...checkedItems.map(item => item.item)];
+            
+            // checkOrder 객체를 새로운 인덱스에 맞게 업데이트
+            const newCheckOrder = {};
+            checkedItems.forEach((item, index) => {
+                const newIndex = uncheckedItems.length + index;
+                newCheckOrder[newIndex] = item.checkOrder;
+            });
+            checkOrder = newCheckOrder;
+            
+            // 배열 업데이트
+            checklistItems = newChecklistItems;
+            
+            // 다시 렌더링
+            renderChecklist();
+            
+            // 체크 상태 복원
+            setTimeout(() => {
+                checklistItems.forEach((item, index) => {
+                    const checkbox = document.getElementById(`check${index + 1}`);
+                    if (checkbox && currentStates[item] !== undefined) {
+                        checkbox.checked = currentStates[item];
+                    }
+                });
+            }, 50);
+        }
+        
         // 체크리스트 일괄 해제 함수
         function uncheckAllChecklist() {
             let hasCheckedItems = false;
@@ -778,6 +872,10 @@
                         checkbox.checked = false;
                     }
                 });
+                
+                // 체크 순서 초기화
+                checkOrder = {};
+                nextCheckOrder = 1;
                 
                 // 변경사항 저장 및 문서 업데이트
                 saveFormDataToLocalStorage();
@@ -1029,6 +1127,8 @@
                 }
             });
             formData.checklistStates = checkStates;
+            formData.checkOrder = checkOrder;
+            formData.nextCheckOrder = nextCheckOrder;
             
             const roomName = document.getElementById('documentTitle').value || '미지정';
             const settlementDate = document.getElementById('settlementDate').value;
@@ -1093,6 +1193,12 @@
                         checklistItems = formData.checklistItems;
                         renderChecklist();
                         
+                        // 체크 순서 데이터 복원
+                        if (formData.checkOrder) {
+                            checkOrder = formData.checkOrder;
+                            nextCheckOrder = formData.nextCheckOrder || 1;
+                        }
+                        
                         // 체크리스트 상태도 복원
                         if (formData.checklistStates) {
                             setTimeout(() => {
@@ -1110,7 +1216,7 @@
                     
                     // 폼에 데이터 로드
                     for (const elementId in formData) {
-                        if (elementId === 'checklistItems' || elementId === 'checklistStates') continue; // 체크리스트는 별도 처리됨
+                        if (elementId === 'checklistItems' || elementId === 'checklistStates' || elementId === 'checkOrder' || elementId === 'nextCheckOrder') continue; // 체크리스트는 별도 처리됨
                         const element = document.getElementById(elementId);
                         if (element) {
                             if (element.type === 'checkbox' || element.type === 'radio') {
@@ -1408,6 +1514,8 @@
                 }
             });
             formData.checklistStates = checkStates;
+            formData.checkOrder = checkOrder;
+            formData.nextCheckOrder = nextCheckOrder;
             localStorage.setItem(localStorageKeyPrefix + formId, JSON.stringify(formData));
             // console.log('Form data saved to localStorage');
         }
@@ -1421,6 +1529,12 @@
                 if (formData.checklistItems) {
                     checklistItems = formData.checklistItems;
                     renderChecklist();
+                    
+                    // 체크 순서 데이터 복원
+                    if (formData.checkOrder) {
+                        checkOrder = formData.checkOrder;
+                        nextCheckOrder = formData.nextCheckOrder || 1;
+                    }
                     
                     // 체크리스트 상태도 복원
                     if (formData.checklistStates) {
@@ -1438,7 +1552,7 @@
                 }
                 
                 for (const id in formData) {
-                    if (id === 'checklistItems' || id === 'checklistStates') continue; // 체크리스트는 별도 처리
+                    if (id === 'checklistItems' || id === 'checklistStates' || id === 'checkOrder' || id === 'nextCheckOrder') continue; // 체크리스트는 별도 처리
                     const element = document.getElementById(id);
                     if (element) {
                         if (element.type === 'checkbox') {

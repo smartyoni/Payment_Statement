@@ -10,7 +10,8 @@
       "Bash(node:*)",
       "Bash(dir)",
       "Bash(start index.html)",
-      "Bash(npx serve:*)"
+      "Bash(npx serve:*)",
+      "Read(C:\\Users\\User\\Desktop\\템플릿보관함/**)"
     ],
     "deny": [],
     "ask": []
