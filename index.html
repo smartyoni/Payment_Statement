@@ -548,7 +548,16 @@
         function renderChecklist() {
             const container = document.getElementById('checklistContainer');
             container.innerHTML = checklistItems.map((item, index) => `
-                <div class="flex items-start group">
+                <div class="flex items-start group p-2 border border-transparent rounded hover:border-gray-300 transition-colors cursor-move" 
+                     draggable="true" 
+                     data-index="${index}"
+                     ondragstart="handleDragStart(event)"
+                     ondragover="handleDragOver(event)"
+                     ondrop="handleDrop(event)"
+                     ondragend="handleDragEnd(event)">
+                    <div class="flex items-center mr-2 text-gray-400">
+                        <i class="fas fa-grip-vertical"></i>
+                    </div>
                     <input type="checkbox" id="check${index + 1}" class="mt-1 mr-2 accent-color-checkbox" onchange="saveFormDataToLocalStorage(); generateDocument();">
                     <label for="check${index + 1}" class="text-gray-700 flex-1">${index + 1}. ${item}</label>
                     <button type="button" onclick="removeChecklistItem(${index})" class="ml-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -632,6 +641,102 @@
                     addChecklistItem();
                 }
             });
+        }
+        
+        // 드래그앤드롭 관련 변수
+        let draggedItem = null;
+        let draggedIndex = null;
+        
+        // 드래그 시작 핸들러
+        function handleDragStart(e) {
+            draggedItem = e.target.closest('[data-index]');
+            draggedIndex = parseInt(draggedItem.dataset.index);
+            e.dataTransfer.effectAllowed = 'move';
+            draggedItem.style.opacity = '0.5';
+        }
+        
+        // 드래그 오버 핸들러
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const targetItem = e.target.closest('[data-index]');
+            if (targetItem && targetItem !== draggedItem) {
+                targetItem.style.borderColor = '#3b82f6';
+                targetItem.style.borderWidth = '2px';
+            }
+        }
+        
+        // 드롭 핸들러
+        function handleDrop(e) {
+            e.preventDefault();
+            const targetItem = e.target.closest('[data-index]');
+            if (targetItem && targetItem !== draggedItem) {
+                const targetIndex = parseInt(targetItem.dataset.index);
+                
+                // 현재 체크 상태 저장
+                const checkStates = {};
+                checklistItems.forEach((item, index) => {
+                    const checkbox = document.getElementById(`check${index + 1}`);
+                    if (checkbox) {
+                        checkStates[index] = checkbox.checked;
+                    }
+                });
+                
+                // 배열 항목 재정렬
+                const draggedText = checklistItems[draggedIndex];
+                checklistItems.splice(draggedIndex, 1);
+                checklistItems.splice(targetIndex, 0, draggedText);
+                
+                // 체크 상태도 재정렬
+                const draggedCheckState = checkStates[draggedIndex];
+                delete checkStates[draggedIndex];
+                
+                // 인덱스 조정
+                const newCheckStates = {};
+                Object.keys(checkStates).forEach(index => {
+                    const idx = parseInt(index);
+                    let newIndex;
+                    if (idx < draggedIndex && idx < targetIndex) {
+                        newIndex = idx;
+                    } else if (idx < draggedIndex && idx >= targetIndex) {
+                        newIndex = idx + 1;
+                    } else if (idx > draggedIndex && idx <= targetIndex) {
+                        newIndex = idx - 1;
+                    } else {
+                        newIndex = idx;
+                    }
+                    newCheckStates[newIndex] = checkStates[index];
+                });
+                newCheckStates[targetIndex] = draggedCheckState;
+                
+                // 리렌더링
+                renderChecklist();
+                
+                // 체크 상태 복원
+                setTimeout(() => {
+                    Object.keys(newCheckStates).forEach(index => {
+                        const checkbox = document.getElementById(`check${parseInt(index) + 1}`);
+                        if (checkbox) {
+                            checkbox.checked = newCheckStates[index];
+                        }
+                    });
+                    saveFormDataToLocalStorage();
+                    generateDocument();
+                }, 50);
+            }
+        }
+        
+        // 드래그 끝 핸들러
+        function handleDragEnd(e) {
+            // 모든 스타일 초기화
+            const allItems = document.querySelectorAll('[data-index]');
+            allItems.forEach(item => {
+                item.style.opacity = '';
+                item.style.borderColor = '';
+                item.style.borderWidth = '';
+            });
+            draggedItem = null;
+            draggedIndex = null;
         }
         
         
