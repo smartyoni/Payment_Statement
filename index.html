@@ -1056,7 +1056,9 @@
                                         checkbox.checked = formData.checklistStates[checkId];
                                     }
                                 });
-                            }, 100);
+                                // 모바일에서 체크 상태 반영을 위해 문서 재생성
+                                generateDocument();
+                            }, 200);
                         }
                     }
                     
@@ -1383,7 +1385,9 @@
                                     checkbox.checked = formData.checklistStates[checkId];
                                 }
                             });
-                        }, 100);
+                            // 모바일에서 체크 상태 반영을 위해 문서 재생성
+                            generateDocument();
+                        }, 200);
                     }
                 }
                 
